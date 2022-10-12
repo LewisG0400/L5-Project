@@ -2,7 +2,8 @@ data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
 [data_matrix, Q_buckets, E_buckets] = create_data_matrix(data, 150);
 
-chi_squared = calculate_chi_squared_value(Q_buckets, data_matrix)
+total_energy_list = get_energy_slices(Q_buckets, data_matrix)
+%chi_squared = calculate_chi_squared_value()
 
 function [first_index, last_index] = get_index_range(Q_centre, Q_range, Q_data)
     first_index_t = 1;
@@ -27,27 +28,27 @@ function [first_index, last_index] = get_index_range(Q_centre, Q_range, Q_data)
     first_index = first_index_t;
 end
 
-function chi_squared = calculate_chi_squared_value(Q_data, data)
-    chi_squared = 0;
-
+function total_energies = get_energy_slices(Q_data, data)
     slice_size = 0.1;
     Q_min = min(Q_data) + slice_size;
     Q_max = max(Q_data) - slice_size;
 
+    total_energies = zeros([1 floor((Q_max-Q_min) / slice_size)]);
+
     Q_centre = Q_min + slice_size;
-    for i = 0:(Q_max-Q_min) / slice_size
+    for i = 1:floor((Q_max-Q_min) / slice_size)
         [first_index, last_index] = get_index_range(Q_centre, slice_size, Q_data);
         sliced_data = data(:, first_index:last_index);
-        total_energies = sum(sliced_data, 2);
+        total_energy = sum(sliced_data, 2);
 
-        sum(total_energies)
-
-        chi_squared = chi_squared + sum(total_energies);
+        total_energies(i) = sum(total_energy);
 
         Q_centre = Q_centre + slice_size;
-
-        plot(total_energies)
     end
+end
+
+function chi_squared = calculate_chi_squared_value(total_energies_1, total_energies_2)
+    chi_squared = sum(total_energies_1 - total_energies_2);
 end
 
 function [data_matrix, Q_buckets, E_buckets] = create_data_matrix(data, n_energy_buckets)
