@@ -15,6 +15,9 @@ AFkagome.addcoupling('mat','J2','bond',2)
 AFkagome.addcoupling('mat','Jd','bond',4)
 plot(AFkagome,'range',[3 3 1])
 
+%S0 = [1 -2 1; 2 -1 -1; 0 0 0];
+%AFkagome.genmagstr('mode','direct','k',[0 0 0],'n',[0 0 1],'unit','lu','S',S0);
+%AFkagome.genmagstr('mode','helical','k',[0 0 0],'n',[0 1 0],'S',[0 1 0]');
 mgIR=[  1   1   1
         0   0   0
         0   0   0];
@@ -36,11 +39,11 @@ experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 [experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 150);
 
 figure
-surf(Q_buckets, E_buckets, experimental_data_matrix, experimental_data_matrix)
 title("Experimental Data")
 xlabel("Q (Å)")
 ylabel("E (meV)")
-zlabel("S(Q, ω)")
+surf(Q_buckets, E_buckets, experimental_data_matrix, experimental_data_matrix)
+colorbar.Label.String = "S(Q, ω)";
 %set(gca, 'zscale', 'log')
 
 total_energy_list_experimental = get_energy_slices(Q_buckets, experimental_data_matrix)
@@ -51,10 +54,10 @@ total_energy_list_theory = total_energy_list_theory * scale_factor
 
 figure
 subplot(2, 1, 1)
-plot(total_energy_list_experimental)
 title("Total energy for Q (experimental data)")
 xlabel("Q +/- 0.1 (Å)")
 ylabel("Total Energy (meV)")
+plot(total_energy_list_experimental)
 subplot(2, 1, 2)
 plot(total_energy_list_theory)
 title("Total energy for Q (theoretical data)")
