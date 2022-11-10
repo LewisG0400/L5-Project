@@ -1,0 +1,15 @@
+function plot_total_intensities(cropped_energy_experimental, cropped_energy_theory, Q_centre, Q_range, chi_squared, interactions)    
+    figure
+    subplot(2, 1, 1)
+    plot(cropped_energy_experimental)
+    title("Total Intensity for Q (experimental data)" )
+    xlabel("Q (Å)")
+    ylabel("Intensity")
+    set(gca, 'xticklabel', linspace(Q_centre - Q_range, Q_centre + Q_range, size(cropped_energy_experimental, 2)))
+    subplot(2, 1, 2)
+    plot(cropped_energy_theory)
+    title("Total Intensity for Q (theoretical data)", "Interactions: [" + num2str(interactions) +"], Chi Squared: " + chi_squared)
+    xlabel("Q (Å)")
+    ylabel("Intensity")
+    set(gca, 'xticklabel', linspace(Q_centre - Q_range, Q_centre + Q_range, size(cropped_energy_theory, 2)))
+end

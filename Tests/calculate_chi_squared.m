@@ -1,10 +1,5 @@
 % Calculates the chi squared value between 2 lists of energies.
-function chi_squared = calculate_chi_squared(total_energies_experimental, total_energies_theory, q_centre, q_range, Q_buckets)
-    [q_min_index, q_max_index] = get_q_index_range(q_centre, q_range, Q_buckets);
-
-    cropped_energy_experimental = total_energies_experimental(q_min_index:q_max_index);
-    cropped_energy_theory = total_energies_theory(q_min_index:q_max_index);
-
+function chi_squared = calculate_chi_squared(total_energies_experimental, total_energies_theory)
     plotting = false;
 
     if plotting
@@ -25,5 +20,5 @@ function chi_squared = calculate_chi_squared(total_energies_experimental, total_
     set(gca, 'xticklabel', q_centre-q_range:0.02:q_centre+q_range)
     end
     
-    chi_squared = sum(cropped_energy_experimental - cropped_energy_theory)^2;
+    chi_squared = sum(total_energies_experimental - total_energies_theory)^2;
 end
