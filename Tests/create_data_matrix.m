@@ -7,8 +7,6 @@ function [data_matrix, Q_buckets, E_buckets] = create_data_matrix(data, n_energy
 
     data_matrix = zeros([n_energy_buckets size(Q_buckets, 2)]);
 
-    disp(size(data_matrix))
-
     Q_index = 0;
     last_Q = -1;
     for i = 1:size(data, 1)
@@ -26,7 +24,7 @@ function [data_matrix, Q_buckets, E_buckets] = create_data_matrix(data, n_energy
             continue
         end
 
-        E_index = round((E / E_max) * (n_energy_buckets - 1)) + 1;
+        E_index = floor((E / E_max) * (n_energy_buckets - 1) + 1);
         data_matrix(E_index, Q_index) = S;
     end
 end

@@ -15,6 +15,7 @@ function exchange_interactions = fit_exchange_interactions(total_intensity_list_
     % positive definite, so we need to catch those cases and change
     % the exchange interactions again.
     valid = false;
+
     while ~valid
 
         try
@@ -93,7 +94,8 @@ function exchange_interactions = fit_exchange_interactions(total_intensity_list_
         else
             % We accept a certain number of moves with a probability proportional
             % to the difference in chi squared.
-            acceptance_probability = min(1, exp(-chi_squared_difference / 2));
+            acceptance_probability = min(1, exp(-chi_squared_difference / 2))
+
             if rand() < acceptance_probability
                 disp("Accepting worse match")
 
