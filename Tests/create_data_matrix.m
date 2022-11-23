@@ -12,7 +12,7 @@ function [data_matrix, Q_buckets, E_buckets] = create_data_matrix(data, n_energy
     for i = 1:size(data, 1)
         Q = data(i, 1);
         E = data(i, 2);
-        S = data(i, 3);
+        S = max(0, data(i, 3));
 
         if last_Q ~= Q
             Q_index = Q_index + 1;
@@ -20,7 +20,7 @@ function [data_matrix, Q_buckets, E_buckets] = create_data_matrix(data, n_energy
             last_Q = Q;
         end
 
-        if E < 0.15
+        if E < 0.7
             continue
         end
 

@@ -2,7 +2,7 @@
 function [kagome, exchange_interactions] = create_spinw_kagome(n_interactions)
     kagome = spinw;
     kagome.genlattice('lat_const', [6 6 10], 'angled', [90 90 120], 'spgr', 'P -3')
-    kagome.addatom('r', [1/2 0 0], 'S', 1, 'label', 'MCu1', 'color', 'r')
+    kagome.addatom('r', [1/2 0 0], 'S', 1/2, 'label', 'MCu1', 'color', 'r')
 
     kagome.gencoupling('maxDistance', 7)
 
