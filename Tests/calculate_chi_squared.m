@@ -7,12 +7,12 @@ function chi_squared = calculate_chi_squared(total_intensities_experimental, tot
     calculation_intensities_experimental = total_intensities_experimental(1, cutoff_index:end);
     calculation_intensities_theory = total_intensities_theory(1, cutoff_index:end);
 
-    sum = 0;
+    diff = zeros([1 size(calculation_intensities_theory,2)]);
     for i = 1:size(calculation_intensities_theory, 2)
-        diff = calculation_intensities_experimental(i) - calculation_intensities_theory(i);
-        sum = sum + diff;
+        diff(i) = (calculation_intensities_experimental(i) - calculation_intensities_theory(i))^2;
     end
-    disp(sum^2);
+    sum_diff = sum(diff);
     
-    chi_squared = sum^2;
+    chi_squared = sum_diff;
+
 end
