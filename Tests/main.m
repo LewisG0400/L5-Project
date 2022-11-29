@@ -33,9 +33,16 @@ interaction_to_change = 1;
 chi_squared_history = [];
 interaction_history = zeros([1 3]);
 intensity_history = zeros([1 99]);
+worst_accepted = 10;
+worse_accepted_count = 0;
+worse_rejected_count = 0;
 
 % Set up the kagome lattice structure
 [kagome, exchange_interactions] = create_spinw_kagome(3);
+exchange_interactions(2) = 0;
+kagome.setmatrix('mat', 2, 'pref', 0);
+
+interaction_indices = [1, 3];
 
 % Calculate the spin wave dispersion of the lattice with the
 % iniital parameters. Throws some error if the Hamiltonian is not
@@ -52,7 +59,8 @@ while ~valid
     catch e
         disp("Error: " + e.message);
 
-        interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
+        %interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
+        interaction_to_change = interaction_indices(round(rand()) + 1);
         % new_exchange_interaction = exchange_interactions(interaction_to_change) + rand() - 0.5;
         new_exchange_interaction = rand() * 10.0 - 5.0;
         exchange_interactions(interaction_to_change) = new_exchange_interaction;
@@ -87,7 +95,8 @@ while ~done
 
     % Pick a random exchange interaction to change. It's new value is sampled from
     % (-5, 5)
-    interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
+    %interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
+    interaction_to_change = interaction_indices(round(rand()) + 1);
     if original_chi_squared > 0.25
         new_exchange_interaction = rand() * 10.0 - 5.0;
     else
@@ -140,6 +149,11 @@ while ~done
         acceptance_probability = min(1, exp(-chi_squared_difference / 2))
 
         if rand() < acceptance_probability
+            worse_accepted_count = worse_accepted_count + 1;
+            if acceptance_probability < worst_accepted
+                worst_accepted = acceptance_probability;
+            end
+
             disp("Accepting worse match by changing " + interaction_to_change + " to " + new_exchange_interaction)
             disp("New exchange interactions are: " + num2str(exchange_interactions));
 
@@ -160,6 +174,8 @@ while ~done
         else
             disp("Worse match not accepted, reversing")
             disp("Exchange interactions are: " + exchange_interactions);
+
+            worse_rejected_count = worse_rejected_count + 1;
         end
 
     end

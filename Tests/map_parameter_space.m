@@ -33,9 +33,9 @@ chi_squareds = zeros([100 100]);
 
 i = 1;
 j = 1;
-for j1 = -5.0:0.25:5.0
+for j1 = -5.0:0.1:5.0
     j = 1;
-    for jd = -5.0:0.25:5.0
+    for jd = -5.0:0.1:5.0
         kagome.setmatrix('mat', 1, 'pref', j1);
         kagome.setmatrix('mat', 3, 'pref', jd);
 
@@ -45,8 +45,7 @@ for j1 = -5.0:0.25:5.0
             new_pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
         catch e
             %disp("Error: " + e.message);
-            chi_squareds(i, j) = 100;
-            i = i+1;
+            chi_squareds(i, j) = 10;
             j = j+1;
             continue;
         end
@@ -61,6 +60,6 @@ for j1 = -5.0:0.25:5.0
 end
 
 figure
-surf(-5.0:0.25:0.5, -5.0:0.25:0.5, chi_squareds, chi_squareds);
+surf(-5.0:0.1:5.0, -5.0:0.1:5.0, chi_squareds, chi_squareds);
 xlabel('J1 (meV)');
 ylabel('Jd (meV)');
