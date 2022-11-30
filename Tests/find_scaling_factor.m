@@ -19,7 +19,7 @@ drawnow()
 Q_centre = 0.5;
 Q_range = 0.05;
 
-total_intensity_list_experimental = get_total_intensities(Q_buckets, experimental_data_matrix);
+total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
 
 kagome = spinw;
 kagome.genlattice('lat_const', [6 6 10], 'angled', [90 90 120], 'spgr', 'P -3')
@@ -44,7 +44,7 @@ kagome.genmagstr('mode', 'direct', 'nExt', [1 1 1], 'unit', 'lu', 'n', [0 0 1], 
 pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false);
 figure
 sw_plotspec(pow_spec, 'axLim', [0 0.2], 'colorbar', true)
-total_intensity_list_theory = get_total_intensities(pow_spec.hklA, pow_spec.swConv);
+total_intensity_list_theory = get_total_intensities(pow_spec.swConv);
 
 scale_factor = max(total_intensity_list_experimental) / max(total_intensity_list_theory)
 total_intensity_list_theory = total_intensity_list_theory * scale_factor;

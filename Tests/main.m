@@ -1,3 +1,6 @@
+load("../data/chi_squareds.mat")
+
+
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
 [experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
@@ -19,11 +22,13 @@ drawnow()
 
 Q_centre = 0.5;
 Q_range = 0.05;
+acceptance_parameter = 10.0;
+total_iterations = 10000;
 
 [lower_Q, upper_Q] = get_q_index_range(Q_centre, Q_range, Q_buckets);
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 
-total_intensity_list_experimental = get_total_intensities(Q_buckets, experimental_data_matrix);
+total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
 total_intensity_list_experimental(end) = [];
 
 % fit_exchange_interactions(total_intensity_list_experimental, Q_buckets, 0.5, 0.05);
@@ -33,9 +38,10 @@ interaction_to_change = 1;
 chi_squared_history = [];
 interaction_history = zeros([1 3]);
 intensity_history = zeros([1 99]);
-worst_accepted = 10;
+worst_accepted = 0;
 worse_accepted_count = 0;
 worse_rejected_count = 0;
+fail_count = 0;
 
 % Set up the kagome lattice structure
 [kagome, exchange_interactions] = create_spinw_kagome(3);
@@ -53,7 +59,7 @@ valid = false;
 while ~valid
 
     try
-        orignal_pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false);
+        orignal_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false);
 
         valid = true;
     catch e
@@ -71,7 +77,7 @@ while ~valid
 
 end
 
-original_total_intensity_list = get_total_intensities(orignal_pow_spec.hklA, orignal_pow_spec.swConv);
+original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv);
 
 % Rescale the theory data
 % I have taken out the scaling as, for the correct interactions, SpinW's
@@ -89,7 +95,7 @@ run_count = 0;
 done = false;
 while ~done
     run_count = run_count + 1;
-    if run_count > 10000
+    if run_count > total_iterations
         break;
     end
 
@@ -107,13 +113,15 @@ while ~done
     % Try calculating a powder spectrum from the new parameters.
     % If it fails, we just repick new parameters.
     try
-        new_pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+        new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+        %new_pow_spec = sw_instrument(new_pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
     catch e
-        %disp("Error: " + e.message);
+        disp("Error: " + e.message);
+        fail_count = fail_count + 1;
         continue;
     end
 
-    new_total_intensity_list = get_total_intensities(new_pow_spec.hklA, new_pow_spec.swConv);
+    new_total_intensity_list = get_total_intensities(new_pow_spec.swConv);
 
     % Rescale the theory data before we calculate chi squared
     %scale_factor = max(total_intensity_list_experimental) / max(new_total_intensity_list);
@@ -146,7 +154,7 @@ while ~done
     else
         % We accept a certain number of moves with a probability proportional
         % to the difference in chi squared.
-        acceptance_probability = min(1, exp(-chi_squared_difference / 2))
+        acceptance_probability = min(1, exp(-chi_squared_difference / acceptance_parameter))
 
         if rand() < acceptance_probability
             worse_accepted_count = worse_accepted_count + 1;
@@ -175,6 +183,10 @@ while ~done
             disp("Worse match not accepted, reversing")
             disp("Exchange interactions are: " + exchange_interactions);
 
+            %chi_squared_history(end + 1) = original_chi_squared;
+            %interaction_history(end + 1, :) = exchange_interactions;
+            %intensity_history(end + 1, :) = new_total_intensity_list;
+
             worse_rejected_count = worse_rejected_count + 1;
         end
 
@@ -195,3 +207,6 @@ disp(interaction_history)
 for i = 1:10
     plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
 end
+
+plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
+save("../results/no_sw_instrument/fitting_" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_fixed")
