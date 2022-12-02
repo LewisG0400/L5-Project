@@ -1,3 +1,6 @@
+Q_centre = 0.5;
+Q_range = 0.05;
+
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
 [experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
@@ -15,9 +18,6 @@ xlabel("Q (Å)", 'fontsize', 18)
 ylabel("E (meV)", 'fontsize', 18)
 zlabel("S(Q, ω)")
 drawnow()
-
-Q_centre = 0.5;
-Q_range = 0.05;
 
 total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
 
@@ -41,9 +41,11 @@ mgIR = [1 1 1
     0 0 0];
 kagome.genmagstr('mode', 'direct', 'nExt', [1 1 1], 'unit', 'lu', 'n', [0 0 1], 'S', mgIR, 'k', [0 0 0]);
 
-pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false);
+pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false);
+pow_spec = sw_instrument(pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
+
 figure
-sw_plotspec(pow_spec, 'axLim', [0 0.2], 'colorbar', true)
+sw_plotspec(pow_spec, 'axLim', [0 500], 'colorbar', true)
 total_intensity_list_theory = get_total_intensities(pow_spec.swConv);
 
 scale_factor = max(total_intensity_list_experimental) / max(total_intensity_list_theory)
