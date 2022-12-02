@@ -202,9 +202,12 @@ ylabel("Chi Squared")
 disp("Interaction History:")
 disp(interaction_history)
 
+lowest_Q_value = Q_buckets(1);
+highest_Q_value = Q_buckets(end);
 [best_match_chi_squareds, best_matches_indices] = mink(chi_squared_history, 10);
 for i = 1:10
-    plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
+    % plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
+    plot_power_spectrum(interaction_history(best_matches_indices(i), :), kagome, lowest_Q_value, highest_Q_value);
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
