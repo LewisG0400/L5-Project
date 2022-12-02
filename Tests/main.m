@@ -1,5 +1,9 @@
-load("../data/chi_squareds.mat")
+Q_centre = 0.5;
+Q_range = 0.05;
+acceptance_parameter = 4.0;
+total_iterations = 10000;
 
+load("../data/chi_squareds_sw_instrument.mat")
 
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
@@ -20,11 +24,6 @@ drawnow()
 
 %set(gca, 'zscale', 'log')
 
-Q_centre = 0.5;
-Q_range = 0.05;
-acceptance_parameter = 10.0;
-total_iterations = 10000;
-
 [lower_Q, upper_Q] = get_q_index_range(Q_centre, Q_range, Q_buckets);
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 
@@ -38,7 +37,7 @@ interaction_to_change = 1;
 chi_squared_history = [];
 interaction_history = zeros([1 3]);
 intensity_history = zeros([1 99]);
-worst_accepted = 0;
+worst_accepted = 1;
 worse_accepted_count = 0;
 worse_rejected_count = 0;
 fail_count = 0;
@@ -65,8 +64,8 @@ while ~valid
     catch e
         disp("Error: " + e.message);
 
-        %interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
-        interaction_to_change = interaction_indices(round(rand()) + 1);
+        interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
+        %interaction_to_change = interaction_indices(round(rand()) + 1);
         % new_exchange_interaction = exchange_interactions(interaction_to_change) + rand() - 0.5;
         new_exchange_interaction = rand() * 10.0 - 5.0;
         exchange_interactions(interaction_to_change) = new_exchange_interaction;
@@ -101,9 +100,9 @@ while ~done
 
     % Pick a random exchange interaction to change. It's new value is sampled from
     % (-5, 5)
-    %interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
-    interaction_to_change = interaction_indices(round(rand()) + 1);
-    if original_chi_squared > 0.25
+    interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
+    %interaction_to_change = interaction_indices(round(rand()) + 1);
+    if true %original_chi_squared > 1
         new_exchange_interaction = rand() * 10.0 - 5.0;
     else
         new_exchange_interaction = exchange_interactions(interaction_to_change) + rand() - 0.5;
@@ -114,7 +113,7 @@ while ~done
     % If it fails, we just repick new parameters.
     try
         new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-        %new_pow_spec = sw_instrument(new_pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
+        new_pow_spec = sw_instrument(new_pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
     catch e
         disp("Error: " + e.message);
         fail_count = fail_count + 1;
@@ -124,8 +123,8 @@ while ~done
     new_total_intensity_list = get_total_intensities(new_pow_spec.swConv);
 
     % Rescale the theory data before we calculate chi squared
-    %scale_factor = max(total_intensity_list_experimental) / max(new_total_intensity_list);
-    %new_total_intensity_list = new_total_intensity_list * scale_factor;
+    scale_factor = max(total_intensity_list_experimental) / max(new_total_intensity_list);
+    new_total_intensity_list = new_total_intensity_list * scale_factor;
 
     new_chi_squared = calculate_chi_squared(total_intensity_list_experimental, new_total_intensity_list, E_buckets);
 
@@ -209,4 +208,4 @@ for i = 1:10
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
-save("../results/no_sw_instrument/fitting_" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_fixed")
+save("../results/sw_instrument_param_4/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_steps_3")

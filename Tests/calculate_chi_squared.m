@@ -11,6 +11,10 @@ function chi_squared = calculate_chi_squared(total_intensities_experimental, tot
 
     diff = zeros([1 size(calculation_intensities_theory,2)]);
     for i = 1:size(calculation_intensities_theory, 2)
+        if isnan(calculation_intensities_theory(i))
+            diff(i) = 0;
+            continue
+        end
         diff(i) = ((calculation_intensities_experimental(i) - calculation_intensities_theory(i))^2) / sigma_2;
     end
     sum_diff = sum(diff);
