@@ -1,14 +1,14 @@
-Q_centre = 0.5;
-Q_range = 0.05;
-acceptance_parameter = 4.0;
-total_iterations = 10000;
+Q_centre = 0.65;
+Q_range = 0.075;
+acceptance_parameter = 8.0;
+total_iterations = 2500;
 
 load("../data/chi_squareds_sw_instrument.mat")
 
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
 [experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
-max_energy = ceil(max(E_buckets));
+max_energy = max(experimental_data(:, 2));
 
 figure
 experimental_data_plot = surf(Q_buckets, E_buckets, experimental_data_matrix, experimental_data_matrix, 'EdgeColor', 'none');
@@ -93,7 +93,6 @@ plot_total_intensities(total_intensity_list_experimental, original_total_intensi
 run_count = 0;
 done = false;
 while ~done
-    run_count = run_count + 1;
     if run_count > total_iterations
         break;
     end
@@ -112,6 +111,7 @@ while ~done
     % Try calculating a powder spectrum from the new parameters.
     % If it fails, we just repick new parameters.
     try
+        % new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 5e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
         new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
         new_pow_spec = sw_instrument(new_pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
     catch e
@@ -119,6 +119,8 @@ while ~done
         fail_count = fail_count + 1;
         continue;
     end
+
+    run_count = run_count + 1;
 
     new_total_intensity_list = get_total_intensities(new_pow_spec.swConv);
 
@@ -198,7 +200,7 @@ plot(chi_squared_history)
 title("History of chi squared values")
 xlabel("Iteration")
 ylabel("Chi Squared")
-
+% 
 disp("Interaction History:")
 disp(interaction_history)
 
@@ -206,9 +208,10 @@ lowest_Q_value = Q_buckets(1);
 highest_Q_value = Q_buckets(end);
 [best_match_chi_squareds, best_matches_indices] = mink(chi_squared_history, 10);
 for i = 1:10
-    % plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
-    plot_power_spectrum(interaction_history(best_matches_indices(i), :), kagome, lowest_Q_value, highest_Q_value);
+    %plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
+    %plot_powder_spectrum(interaction_history(best_matches_indices(i), :), chi_squared_history(best_matches_indices(i)), kagome, lowest_Q_value, highest_Q_value, max_energy);
+    plot_powder_spectrum_and_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, kagome, lowest_Q_value, highest_Q_value, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :))
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
-save("../results/sw_instrument_param_4/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_steps_3")
+save("../results/with_j2/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-05_centre_0-65_1")
