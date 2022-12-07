@@ -1,5 +1,5 @@
-Q_centre = 0.5;
-Q_range = 0.2;
+Q_centre = 0.35;
+Q_range = 0.15;
 acceptance_parameter = 2.0;
 total_iterations = 2500;
 
@@ -27,7 +27,7 @@ drawnow()
 [lower_Q, upper_Q] = get_q_index_range(Q_centre, Q_range, Q_buckets);
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 
-total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
+total_intensity_list_experimental = get_total_intensities(experimental_data_matrix, E_buckets);
 experimental_scale_factor = 1 / max(total_intensity_list_experimental, [], 'all');
 total_intensity_list_experimental = total_intensity_list_experimental * experimental_scale_factor;
 total_intensity_list_experimental(end) = [];
@@ -78,7 +78,7 @@ while ~valid
 
 end
 
-original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv);
+original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv, E_buckets);
 
 % Rescale the theory data
 % I have taken out the scaling as, for the correct interactions, SpinW's
@@ -86,7 +86,7 @@ original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv);
 %scale_factor = max(total_intensity_list_experimental, 1) / max(original_total_intensity_list, 1);
 %original_total_intensity_list = original_total_intensity_list * scale_factor;
 
-original_chi_squared = calculate_chi_squared(total_intensity_list_experimental, original_total_intensity_list, E_buckets);
+original_chi_squared = calculate_chi_squared(total_intensity_list_experimental, original_total_intensity_list);
 chi_squared_history(1) = original_chi_squared;
 interaction_history(1, :) = exchange_interactions;
 
@@ -124,13 +124,13 @@ while ~done
 
     run_count = run_count + 1;
 
-    new_total_intensity_list = get_total_intensities(new_pow_spec.swConv);
+    new_total_intensity_list = get_total_intensities(new_pow_spec.swConv, E_buckets);
 
     % Rescale the theory data before we calculate chi squared
     scale_factor = max(total_intensity_list_experimental) / max(new_total_intensity_list);
     new_total_intensity_list = new_total_intensity_list * scale_factor;
 
-    new_chi_squared = calculate_chi_squared(total_intensity_list_experimental, new_total_intensity_list, E_buckets);
+    new_chi_squared = calculate_chi_squared(total_intensity_list_experimental, new_total_intensity_list);
 
     chi_squared_difference = new_chi_squared - original_chi_squared
 
@@ -216,4 +216,4 @@ for i = 1:10
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
-save("../results/with_j2/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-2_centre_0-5_1")
+save("../results/with_j2/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-15_centre_0-35_1")

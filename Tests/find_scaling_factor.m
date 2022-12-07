@@ -16,7 +16,7 @@ experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 % zlabel("S(Q, ω)")
 % drawnow()
 
-total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
+total_intensity_list_experimental = get_total_intensities(experimental_data_matrix, E_buckets);
 
 kagome = spinw;
 kagome.genlattice('lat_const', [6 6 10], 'angled', [90 90 120], 'spgr', 'P -3')
@@ -43,9 +43,9 @@ pow_spec = sw_instrument(pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
 % 
 % figure
 % sw_plotspec(pow_spec, 'axLim', [0 500], 'colorbar', true)
-total_intensity_list_theory = get_total_intensities(pow_spec.swConv);
+total_intensity_list_theory = get_total_intensities(pow_spec.swConv, E_buckets);
 
-scale_factor = max(total_intensity_list_experimental) / max(total_intensity_list_theory)
+scale_factor = total_intensity_list_experimental(1) / total_intensity_list_theory(1)
 total_intensity_list_theory = total_intensity_list_theory * scale_factor;
 
 total_intensity_list_experimental(end) = [];
