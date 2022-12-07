@@ -1,6 +1,6 @@
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
-[experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
+[experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100, cutoff_energy);
 [lower_Q, upper_Q] = get_q_index_range(Q_centre, Q_range, Q_buckets);
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 
@@ -16,7 +16,7 @@ experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 % zlabel("S(Q, ω)")
 % drawnow()
 
-total_intensity_list_experimental = get_total_intensities(experimental_data_matrix, E_buckets);
+total_intensity_list_experimental = get_total_intensities(experimental_data_matrix, cutoff_index);
 
 kagome = spinw;
 kagome.genlattice('lat_const', [6 6 10], 'angled', [90 90 120], 'spgr', 'P -3')
@@ -43,13 +43,14 @@ pow_spec = sw_instrument(pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
 % 
 % figure
 % sw_plotspec(pow_spec, 'axLim', [0 500], 'colorbar', true)
-total_intensity_list_theory = get_total_intensities(pow_spec.swConv, E_buckets);
+total_intensity_list_theory = get_total_intensities(pow_spec.swConv, cutoff_index);
 
-scale_factor = total_intensity_list_experimental(1) / total_intensity_list_theory(1)
+%scale_factor = total_intensity_list_experimental(1) / total_intensity_list_theory(1)
+scale_factor = max(total_intensity_list_experimental, [], 'all') / max(total_intensity_list_theory, [], 'all')
 total_intensity_list_theory = total_intensity_list_theory * scale_factor;
 
 total_intensity_list_experimental(end) = [];
 
-chi_squared = calculate_chi_squared(total_intensity_list_experimental, total_intensity_list_theory, E_buckets);
+chi_squared = calculate_chi_squared(total_intensity_list_experimental, total_intensity_list_theory);
 %plot_total_intensities(total_intensity_list_experimental, total_intensity_list_theory, max(E_buckets), chi_squared, [-3.275, 0, 0.948]);
-plot_powder_spectrum_and_intensities(total_intensity_list_experimental, total_intensity_list_theory, max(E_buckets), kagome, lowest_Q_value, highest_Q_value, chi_squared, [-3.275, 0, 0.948])
+plot_powder_spectrum_and_intensities(total_intensity_list_experimental, total_intensity_list_theory, max(E_buckets), cutoff_energy, kagome, lowest_Q_value, highest_Q_value, Q_centre, Q_range, chi_squared, [-3.275, 0, 0.948])

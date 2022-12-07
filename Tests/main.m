@@ -1,14 +1,18 @@
-Q_centre = 0.35;
-Q_range = 0.15;
+Q_centre = 0.2;
+Q_range = 0.1;
 acceptance_parameter = 2.0;
 total_iterations = 2500;
+n_E_buckets = 100;
+cutoff_energy = 0.3;
 
 load("../data/chi_squareds_sw_instrument.mat")
 
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
-[experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
+[experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, n_E_buckets, cutoff_energy);
 max_energy = max(experimental_data(:, 2));
+cutoff_index = find(E_buckets >= cutoff_energy, 1, 'first');
+
 
 figure
 experimental_data_plot = surf(Q_buckets, E_buckets, experimental_data_matrix, experimental_data_matrix, 'EdgeColor', 'none');
@@ -20,6 +24,9 @@ title("Neutron Scattering Data for Haydeeite", 'fontsize', 18)
 xlabel("Q (Å)", 'fontsize', 18)
 ylabel("E (meV)", 'fontsize', 18)
 zlabel("S(Q, ω)")
+hold on
+plot([Q_centre - Q_range, Q_centre - Q_range], [0 max_energy])
+plot([Q_centre + Q_range, Q_centre + Q_range], [0 max_energy])
 drawnow()
 
 %set(gca, 'zscale', 'log')
@@ -27,9 +34,9 @@ drawnow()
 [lower_Q, upper_Q] = get_q_index_range(Q_centre, Q_range, Q_buckets);
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 
-total_intensity_list_experimental = get_total_intensities(experimental_data_matrix, E_buckets);
-experimental_scale_factor = 1 / max(total_intensity_list_experimental, [], 'all');
-total_intensity_list_experimental = total_intensity_list_experimental * experimental_scale_factor;
+total_intensity_list_experimental = get_total_intensities(experimental_data_matrix, cutoff_index);
+%experimental_scale_factor = 1 / max(total_intensity_list_experimental, [], 'all');
+%total_intensity_list_experimental = total_intensity_list_experimental * experimental_scale_factor;
 total_intensity_list_experimental(end) = [];
 
 % fit_exchange_interactions(total_intensity_list_experimental, Q_buckets, 0.5, 0.05);
@@ -38,7 +45,7 @@ interaction_to_change = 1;
 
 chi_squared_history = [];
 interaction_history = zeros([1 3]);
-intensity_history = zeros([1 99]);
+intensity_history = zeros([1 n_E_buckets - cutoff_index]);
 worst_accepted = 1;
 worse_accepted_count = 0;
 worse_rejected_count = 0;
@@ -78,7 +85,7 @@ while ~valid
 
 end
 
-original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv, E_buckets);
+original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv, cutoff_index);
 
 % Rescale the theory data
 % I have taken out the scaling as, for the correct interactions, SpinW's
@@ -124,10 +131,10 @@ while ~done
 
     run_count = run_count + 1;
 
-    new_total_intensity_list = get_total_intensities(new_pow_spec.swConv, E_buckets);
+    new_total_intensity_list = get_total_intensities(new_pow_spec.swConv, cutoff_index);
 
     % Rescale the theory data before we calculate chi squared
-    scale_factor = max(total_intensity_list_experimental) / max(new_total_intensity_list);
+    scale_factor = max(total_intensity_list_experimental, [], 'all') / max(new_total_intensity_list, [], 'all');
     new_total_intensity_list = new_total_intensity_list * scale_factor;
 
     new_chi_squared = calculate_chi_squared(total_intensity_list_experimental, new_total_intensity_list);
@@ -212,8 +219,8 @@ highest_Q_value = Q_buckets(end);
 for i = 1:10
     %plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
     %plot_powder_spectrum(interaction_history(best_matches_indices(i), :), chi_squared_history(best_matches_indices(i)), kagome, lowest_Q_value, highest_Q_value, max_energy);
-    plot_powder_spectrum_and_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, kagome, lowest_Q_value, highest_Q_value, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :))
+    plot_powder_spectrum_and_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, cutoff_energy, kagome, lowest_Q_value, highest_Q_value, Q_centre, Q_range, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :))
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
-save("../results/with_j2/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-15_centre_0-35_1")
+save("../results/with_j2_NaN-fixed/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-1_centre_0-3_2")

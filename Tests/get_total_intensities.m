@@ -1,12 +1,10 @@
 
 % Takes in a matrix of S values and sums the intensities for
 % each value of Q
-function total_intensities = get_total_intensities(data, E_buckets)
+function total_intensities = get_total_intensities(data, cutoff_index)
     % We cut all the data for E < 0.7 out of the experimental data
     % as it is full of elastic scattering data, which isn't calculated
     % by SpinW.
-    cutoff_index = find(E_buckets >= 0.7, 1, 'first')
-
     total_intensities = zeros(1, size(data, 1) - cutoff_index);
 
     for i = cutoff_index:size(data, 1)
