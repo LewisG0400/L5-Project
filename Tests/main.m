@@ -1,6 +1,6 @@
-Q_centre = 0.65;
-Q_range = 0.075;
-acceptance_parameter = 8.0;
+Q_centre = 0.5;
+Q_range = 0.2;
+acceptance_parameter = 2.0;
 total_iterations = 2500;
 
 load("../data/chi_squareds_sw_instrument.mat")
@@ -28,6 +28,8 @@ drawnow()
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
 
 total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
+experimental_scale_factor = 1 / max(total_intensity_list_experimental, [], 'all');
+total_intensity_list_experimental = total_intensity_list_experimental * experimental_scale_factor;
 total_intensity_list_experimental(end) = [];
 
 % fit_exchange_interactions(total_intensity_list_experimental, Q_buckets, 0.5, 0.05);
@@ -214,4 +216,4 @@ for i = 1:10
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
-save("../results/with_j2/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-05_centre_0-65_1")
+save("../results/with_j2/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-2_centre_0-5_1")

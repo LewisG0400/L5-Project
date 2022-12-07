@@ -1,6 +1,3 @@
-Q_centre = 0.5;
-Q_range = 0.05;
-
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
 [experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
