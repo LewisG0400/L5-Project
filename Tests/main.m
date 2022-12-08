@@ -1,9 +1,10 @@
-Q_centre = 0.2;
-Q_range = 0.1;
-acceptance_parameter = 2.0;
+Q_centre = 0.5;
+Q_range = 0.05;
+acceptance_parameter = 1.0;
 total_iterations = 2500;
 n_E_buckets = 100;
-cutoff_energy = 0.3;
+cutoff_energy = 0.7;
+nRand = 100e3;
 
 load("../data/chi_squareds_sw_instrument.mat")
 
@@ -121,7 +122,7 @@ while ~done
     % If it fails, we just repick new parameters.
     try
         % new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 5e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-        new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+        new_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', nRand, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
         new_pow_spec = sw_instrument(new_pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
     catch e
         disp("Error: " + e.message);
@@ -223,4 +224,4 @@ for i = 1:10
 end
 
 plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
-save("../results/with_j2_NaN-fixed/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-1_centre_0-3_2")
+save("../results/with_j2_NaN-fixed/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-05_centre_0-5_1")
