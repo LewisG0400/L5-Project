@@ -1,0 +1,76 @@
+classdef PowSpecData
+    %POWSPECDATA Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        exchangeInteractions
+        powderSpectrum
+        % This holds the total intensities 
+        totalIntensities
+        chiSquared
+
+        kagome
+        runtimeParameters
+    end
+    
+    methods
+        function obj = PowSpecData(exchangeInteractions, kagome, runtimeParameters)
+            %POWSPECDATA Construct an instance of this class
+            obj.exchangeInteractions = exchangeInteractions;
+            obj.runtimeParameters = runtimeParameters;
+
+            obj.kagome = kagome;
+            
+            for i = 1:size(exchangeInteractions)
+                obj.kagome.setmatrix('mat', i, 'pref', exchangeInteractions(i));
+            end
+        end
+
+        function obj = calculatePowderSpectrum(obj)
+            try
+                Q_values = obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range:0.05:obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range;
+                powSpec = obj.kagome.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+                powSpec = sw_instrument(powSpec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
+
+                obj.powderSpectrum = powSpec;
+            catch e
+                rethrow(e);
+            end
+        end
+
+        function obj = calculateIntensityList(obj)
+            % Delete the powder spectrum to save memory.
+
+            totalIntensityList = get_total_intensities(obj.powderSpectrum.swConv, obj.runtimeParameters.cutoffIndex);
+            obj.totalIntensities = totalIntensityList;
+        end
+        
+        function obj = calculateChiSquared(obj, experimentalIntensityList)
+            % Rescale the theory data before we calculate chi squared
+            scaleFactor = max(totalIntensityListExperimental, [], 'all') / max(totalIntensityList, [], 'all');
+            obj.totalIntensities = obj.totalIntensities * scaleFactor;
+
+            obj.chiSquared = calculate_chi_squared(experimentalIntensityList, obj.totalIntensities);
+        end
+
+        function totalIntensities = getTotalIntensities(obj)
+            totalIntensities = obj.totalIntensities;
+        end
+
+        function chiSquared = getChiSquared(obj, experimentalIntensityList)
+            if isNan(obj.chiSquared)
+                calculateChiSquared(obj, experimentalIntensityList);
+            end
+            chiSquared = obj.chiSquared;
+        end
+
+        function exchangeInteractions = getExchangeInteractions(obj)
+            exchangeInteractions = obj.exchangeInteractions;
+        end
+    end
+
+    methods (Access=private)
+        
+    end
+end
+
