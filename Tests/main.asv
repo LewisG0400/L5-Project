@@ -7,9 +7,7 @@ runtimeParameters.totalIterations = 2500;
 runtimeParameters.n_E_buckets = 100;
 runtimeParameters.cutoffEnergy = 0.7;
 runtimeParameters.nRand = 5e3;
-% If chi squared is less than this value, take the average
-% of 3 measurements to try to counteract the randomness
-% in powder spectrums.
+% If chi squared is less than this value, 
 runtimeParameters.takeAverageCutoff = 0.075;
 
 % This struct has data for monitoring the RMC algorithm.
