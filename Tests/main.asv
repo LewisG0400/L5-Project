@@ -1,209 +1,136 @@
-load("../data/")
+% These are parameters that can be changed to control
+% aspects of the RMC.
+runtimeParameters.Q_centre = 0.5;
+runtimeParameters.Q_range = 0.05;
+runtimeParameters.acceptanceParameter = 5.0;
+runtimeParameters.totalIterations = 100;
+runtimeParameters.n_E_buckets = 100;
+runtimeParameters.nQBuckets = 0;
+runtimeParameters.cutoffEnergy = 0.7;
+runtimeParameters.nRand = 10e3;
+% If chi squared is less than this value, take the average
+% of 3 measurements to try to counteract the randomness
+% in powder spectrums.
+runtimeParameters.takeAverageCutoff = 0.075;
 
+% This struct has data for monitoring the RMC algorithm.
+rmcStats.worstAccepted = 1;
+rmcStats.worseAcceptedCount = 0;
+rmcStats.worseRejectedCount = 0;
+rmcStats.failCount = 0;
+
+% Load in the experimental data
 experimental_data = readmatrix("../data/Haydeeite-Tsub-chiqw.dat");
 
-[experimental_data_matrix, Q_buckets, E_buckets] = create_data_matrix(experimental_data, 100);
-max_energy = ceil(max(E_buckets));
+% Convert it into a useable form.
+[experimental_data_matrix, Q_buckets, runtimeParameters.E_buckets] = create_data_matrix(experimental_data, runtimeParameters.n_E_buckets, runtimeParameters.cutoffEnergy);
+maxEnergy = max(experimental_data(:, 2));
+runtimeParameters.cutoffIndex = find(runtimeParameters.E_buckets >= runtimeParameters.cutoffEnergy, 1, 'first');
 
-figure
-experimental_data_plot = surf(Q_buckets, E_buckets, experimental_data_matrix, experimental_data_matrix, 'EdgeColor', 'none');
-c = colorbar;
-c.Label.String = 'Intensity';
-c.Label.FontSize = 18;
-experiment_data_plot.CDataMapping = 'scaled';
-title("Neutron Scattering Data for Haydeeite", 'fontsize', 18)
-xlabel("Q (Å)", 'fontsize', 18)
-ylabel("E (meV)", 'fontsize', 18)
-zlabel("S(Q, ω)")
-drawnow()
+plot_experimental_data(experimental_data_matrix, runtimeParameters, Q_buckets, maxEnergy);
 
-%set(gca, 'zscale', 'log')
-
-Q_centre = 0.5;
-Q_range = 0.05;
-acceptance_parameter = 2.0;
-
-[lower_Q, upper_Q] = get_q_index_range(Q_centre, Q_range, Q_buckets);
+[lower_Q, upper_Q] = get_q_index_range(runtimeParameters.Q_centre, runtimeParameters.Q_range, Q_buckets);
 experimental_data_matrix = experimental_data_matrix(:, lower_Q:upper_Q);
+runtimeParameters.nQBuckets = upper_Q - lower_Q;
 
-total_intensity_list_experimental = get_total_intensities(experimental_data_matrix);
-total_intensity_list_experimental(end) = [];
-
-% fit_exchange_interactions(total_intensity_list_experimental, Q_buckets, 0.5, 0.05);
-
-interaction_to_change = 1;
-
-chi_squared_history = [];
-interaction_history = zeros([1 3]);
-intensity_history = zeros([1 99]);
-worst_accepted = 10;
-worse_accepted_count = 0;
-worse_rejected_count = 0;
-fail_count = 0;
+experimentalIntensityList = get_total_intensities(experimental_data_matrix, runtimeParameters.cutoffIndex);
+experimentalIntensityList(end) = [];
+experimentalIntensityList = experimentalIntensityList * (1.0 / max(experimentalIntensityList));
 
 % Set up the kagome lattice structure
-[kagome, exchange_interactions] = create_spinw_kagome(3);
-exchange_interactions(2) = 0;
-kagome.setmatrix('mat', 2, 'pref', 0);
-
-interaction_indices = [1, 3];
+[kagome, exchangeInteractions] = create_spinw_kagome(4);
 
 % Calculate the spin wave dispersion of the lattice with the
 % iniital parameters. Throws some error if the Hamiltonian is not
 % positive definite, so we need to catch those cases and change
 % the exchange interactions again.
+originalPowSpecData = PowSpecData(exchangeInteractions, kagome, runtimeParameters);
 valid = false;
 
 while ~valid
-
     try
-        orignal_pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false);
+        originalPowSpecData = originalPowSpecData.calculatePowderSpectrum();
 
         valid = true;
     catch e
         disp("Error: " + e.message);
 
-        %interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
-        interaction_to_change = interaction_indices(round(rand()) + 1);
-        % new_exchange_interaction = exchange_interactions(interaction_to_change) + rand() - 0.5;
-        new_exchange_interaction = rand() * 10.0 - 5.0;
-        exchange_interactions(interaction_to_change) = new_exchange_interaction;
-        kagome.setmatrix('mat', interaction_to_change, 'pref', new_exchange_interaction);
+        exchangeInteractions = rand(1, 4) * 10 - 5;
 
-        disp(exchange_interactions);
+        originalPowSpecData = originalPowSpecData.setExchangeInteractions(exchangeInteractions);
+        disp(exchangeInteractions);
     end
-
 end
 
-original_total_intensity_list = get_total_intensities(orignal_pow_spec.swConv);
+originalPowSpecData = originalPowSpecData.calculateIntensityList();
+originalPowSpecData = originalPowSpecData.calculateChiSquared(experimentalIntensityList);
 
-% Rescale the theory data
-% I have taken out the scaling as, for the correct interactions, SpinW's
-% intensity range is the same as the experimental data's
-%scale_factor = max(total_intensity_list_experimental, 1) / max(original_total_intensity_list, 1);
-%original_total_intensity_list = original_total_intensity_list * scale_factor;
-
-original_chi_squared = calculate_chi_squared(total_intensity_list_experimental, original_total_intensity_list, E_buckets);
-chi_squared_history(1) = original_chi_squared;
-interaction_history(1, :) = exchange_interactions;
-
-plot_total_intensities(total_intensity_list_experimental, original_total_intensity_list, max_energy, original_chi_squared, exchange_interactions);
+history = [originalPowSpecData];
 
 run_count = 0;
 done = false;
 while ~done
-    run_count = run_count + 1;
-    if run_count > 10000
+    disp(run_count)
+    if run_count >= runtimeParameters.totalIterations
         break;
     end
 
-    % Pick a random exchange interaction to change. It's new value is sampled from
-    % (-5, 5)
-    %interaction_to_change = 1 + floor((size(exchange_interactions, 2)) * rand());
-    interaction_to_change = interaction_indices(round(rand()) + 1);
-    if original_chi_squared > 0.25
-        new_exchange_interaction = rand() * 10.0 - 5.0;
-    else
-        new_exchange_interaction = exchange_interactions(interaction_to_change) + rand() - 0.5;
-    end
-    kagome.setmatrix('mat', interaction_to_change, 'pref', new_exchange_interaction);
+    newInteractions = get_new_interactions(exchangeInteractions);
+    newPowSpecData = PowSpecData(newInteractions, kagome, runtimeParameters);
 
     % Try calculating a powder spectrum from the new parameters.
     % If it fails, we just repick new parameters.
     try
-        new_pow_spec = kagome.powspec(Q_centre - Q_range:0.01:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+        newPowSpecData = newPowSpecData.calculatePowderSpectrum();
     catch e
-        %disp("Error: " + e.message);
-        fail_count = fail_count + 1;
+        disp("Error: " + e.message);
+        rmcStats.failCount = rmcStats.failCount + 1;
         continue;
     end
 
-    new_total_intensity_list = get_total_intensities(new_pow_spec.swConv);
+    run_count = run_count + 1;
 
-    % Rescale the theory data before we calculate chi squared
-    %scale_factor = max(total_intensity_list_experimental) / max(new_total_intensity_list);
-    %new_total_intensity_list = new_total_intensity_list * scale_factor;
+    newPowSpecData = newPowSpecData.calculateIntensityList();
+    newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList);
 
-    new_chi_squared = calculate_chi_squared(total_intensity_list_experimental, new_total_intensity_list, E_buckets);
-
-    chi_squared_difference = new_chi_squared - original_chi_squared
+    chi_squared_difference = newPowSpecData.getChiSquared() - originalPowSpecData.getChiSquared();
 
     if chi_squared_difference < 0
-        exchange_interactions(interaction_to_change) = new_exchange_interaction;
-        %update_current_interactions(new_total_intensity_list, new_pow_spec, new_chi_squared);
+        exchangeInteractions = newInteractions;
+        originalPowSpecData = newPowSpecData;
 
-        original_total_intensity_list = new_total_intensity_list;
-        original_chi_squared = new_chi_squared;
-        original_pow_spec = new_pow_spec;
-
-        chi_squared_history(end + 1) = new_chi_squared;
-        interaction_history(end + 1, :) = exchange_interactions;
-        intensity_history(end + 1, :) = new_total_intensity_list;
-
-        disp(chi_squared_history);
-
-        disp("Better match by changing interaction " + interaction_to_change + " to " + new_exchange_interaction);
-        disp("New exchange interactions are: " + num2str(exchange_interactions));
-
-        %plot_total_intensities(total_intensity_list_experimental, new_total_intensity_list, max_energy, new_chi_squared, exchange_interactions);
+        history(end + 1) = newPowSpecData;
 
         continue;
     else
         % We accept a certain number of moves with a probability proportional
         % to the difference in chi squared.
-        acceptance_probability = min(1, exp(-chi_squared_difference / acceptance_parameter))
+        acceptanceProbability = min(1, exp(-chi_squared_difference / runtimeParameters.acceptanceParameter))
 
-        if rand() < acceptance_probability
-            worse_accepted_count = worse_accepted_count + 1;
-            if acceptance_probability < worst_accepted
-                worst_accepted = acceptance_probability;
+        if rand() < acceptanceProbability
+            rmcStats.worseAcceptedCount = rmcStats.worseAcceptedCount + 1;
+            if acceptanceProbability < rmcStats.worstAccepted
+                rmcStats.worstAccepted = acceptanceProbability;
             end
 
-            disp("Accepting worse match by changing " + interaction_to_change + " to " + new_exchange_interaction)
-            disp("New exchange interactions are: " + num2str(exchange_interactions));
+            exchangeInteractions = newInteractions;
+            originalPowSpecData = copynewPowSpecData;
 
-            exchange_interactions(interaction_to_change) = new_exchange_interaction;
-            %update_current_interactions(new_total_intensity_list, new_pow_spec, new_chi_squared);
-
-            original_total_intensity_list = new_total_intensity_list;
-            original_chi_squared = new_chi_squared;
-            original_pow_spec = new_pow_spec;
-
-            chi_squared_history(end + 1) = new_chi_squared;
-            interaction_history(end + 1, :) = exchange_interactions;
-            intensity_history(end + 1, :) = new_total_intensity_list;
-
-            disp(chi_squared_history);
-
-            %plot_total_intensities(total_intensity_list_experimental, new_total_intensity_list);
+            history(end + 1) = newPowSpecData;
         else
-            disp("Worse match not accepted, reversing")
-            disp("Exchange interactions are: " + exchange_interactions);
-
-            %chi_squared_history(end + 1) = original_chi_squared;
-            %interaction_history(end + 1, :) = exchange_interactions;
-            %intensity_history(end + 1, :) = new_total_intensity_list;
-
-            worse_rejected_count = worse_rejected_count + 1;
+            rmcStats.worseRejectedCount = rmcStats.worseRejectedCount + 1;
         end
 
     end
 
 end
 
-figure
-plot(chi_squared_history)
-title("History of chi squared values")
-xlabel("Iteration")
-ylabel("Chi Squared")
+[chiSquaredHistory, interactionHistory, intensityHistory] = separate_history(history, experimentalIntensityList);
 
-disp("Interaction History:")
-disp(interaction_history)
+plot_chi_squared_history(chiSquaredHistory);
+plot_best_matches(chiSquaredHistory, interactionHistory, intensityHistory, experimentalIntensityList, kagome, Q_buckets, runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, maxEnergy);
+%plot_best_matches_2(history, experimentalIntensityList, kagome, Q_buckets, runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, maxEnergy);
 
-[best_match_chi_squareds, best_matches_indices] = mink(chi_squared_history, 10);
-for i = 1:10
-    plot_total_intensities(total_intensity_list_experimental, intensity_history(best_matches_indices(i), :), max_energy, chi_squared_history(best_matches_indices(i)), interaction_history(best_matches_indices(i), :));
-end
 
-plot_exchanges_on_param_space(chi_squareds, intensity_history, best_match_chi_squareds, best_matches_indices);
-save
+%plot_exchanges_on_param_space(chi_squareds, interaction_history, best_match_chi_squareds, best_matches_indices);
+%save("../results/with_j2_NaN-fixed/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-05_centre_0-5_1")
