@@ -1,8 +1,8 @@
-function newExchangeInteractions = get_new_interactions(oldExchangeInteractions)
+function newExchangeInteractions = get_new_interactions(oldExchangeInteractions, maxValues)
     newExchangeInteractions = oldExchangeInteractions;
     
     interactionToChange = 1 + floor((size(oldExchangeInteractions, 2)) * rand());
-    newExchangeInteraction = rand() * 10.0 - 5.0;
+    newExchangeInteraction = rand() * (maxValues * 2) - maxValues;
 
     newExchangeInteractions(interactionToChange) = newExchangeInteraction;
 end
