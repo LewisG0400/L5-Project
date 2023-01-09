@@ -1,4 +1,4 @@
-function plot_powder_spectrum_and_intensities(cropped_energy_experimental, cropped_energy_theory, max_energy, cutoff_energy, kagome, lower_Q, upper_Q, Q_centre, Q_range, chi_squared, interactions)
+function plot_powder_spectrum_and_intensities(cropped_energy_experimental, cropped_energy_theory, max_energy, cutoff_energy, lattice, lower_Q, upper_Q, Q_centre, Q_range, chi_squared, interactions)
     figure
     subplot(2, 1, 1)
     plot(cropped_energy_experimental)
@@ -14,14 +14,10 @@ function plot_powder_spectrum_and_intensities(cropped_energy_experimental, cropp
 
     subplot(2, 1, 2)
 
-    for i = 1:size(interactions, 2)
-        kagome.setmatrix('mat', i, 'pref', interactions(i))
-    end
-    
     disp(interactions);
     
     try
-        pow_spec = kagome.powspec(lower_Q:0.01:upper_Q, 'Evect', cutoff_energy:0.01:max_energy, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+        pow_spec = lattice.powspec(lower_Q:0.01:upper_Q, 'Evect', cutoff_energy:0.01:max_energy, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
         pow_spec = sw_instrument(pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
     
         sw_plotspec(pow_spec);
