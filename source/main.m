@@ -1,7 +1,7 @@
 % These are parameters that can be changed to control
 % aspects of the RMC.
-runtimeParameters.Q_centre = 0.5;
-runtimeParameters.Q_range = 0.05;
+runtimeParameters.Q_centre = 1.5;
+runtimeParameters.Q_range = 0.1;
 runtimeParameters.acceptanceParameter = 2.0;
 runtimeParameters.totalIterations = 100;
 runtimeParameters.n_E_buckets = 50;
@@ -14,6 +14,7 @@ runtimeParameters.nRand = 1e3;
 runtimeParameters.takeAverageCutoff = 0.075;
 % The function that creates the SpinW objects
 runtimeParameters.latticeGenerator = @averievite;
+runtimeParameters.cutoffIndex = 1;
 
 % This should correspond to the number of exchange interactions
 % input to the lattice generator.
@@ -48,8 +49,10 @@ while ~valid
         valid = true;
     catch e
         disp("Error: " + e.message);
+        %disp(getReport(e, 'extended'));
 
         exchangeInteractions = rand(1, nExchangeParameters) * (maxInteractionStrength * 2) - maxInteractionStrength;
+        exchangeInteractions(2) = -exchangeInteractions(1);
 
         originalPowSpecData = originalPowSpecData.setExchangeInteractions(exchangeInteractions);
         disp(exchangeInteractions);

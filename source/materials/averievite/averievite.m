@@ -8,7 +8,7 @@ function [lattice, interactionBondList] = averievite(exchangeInteractions)
 
     lattice.addmatrix('label', 'J1', 'value', exchangeInteractions(1));
     lattice.addcoupling('mat', 'J1', 'bond', [1, 2, 3]);
-    lattice.addmatrix('label', 'J2', 'value', exchangeInteractions(2));
+    lattice.addmatrix('label', 'J2', 'value', -exchangeInteractions(1));
     lattice.addcoupling('mat', 'J2', 'bond', [4, 5, 6]);
     %lattice.addmatrix('label', 'J3', 'value', exchangeInteractions(3));
     %lattice.addcoupling('mat', 'J3', 'bond', [8, 9, 11, 12]);
@@ -25,7 +25,7 @@ function [lattice, interactionBondList] = averievite(exchangeInteractions)
 
     lattice.genmagstr('mode','direct','nExt', [2 1 1], 'unit', 'lu', 'n', [0 0 1], 'S', mgIR, 'k', [0.5 0 0])
 
-    plot(lattice, 'range', [1 3 3])
+    %plot(lattice, 'range', [1 3 3])
 
     interactionBondList = [ [1, 2, 3, 0];
                             [4, 5, 6, 0];
