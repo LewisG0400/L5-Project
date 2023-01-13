@@ -2,8 +2,8 @@
 % aspects of the RMC.
 runtimeParameters.Q_centre = 1.5;
 runtimeParameters.Q_range = 0.1;
-runtimeParameters.acceptanceParameter = 2.0;
-runtimeParameters.totalIterations = 100;
+runtimeParameters.acceptanceParameter = 0.05;
+runtimeParameters.totalIterations = 5000;
 runtimeParameters.n_E_buckets = 50;
 runtimeParameters.nQBuckets = 0;
 runtimeParameters.cutoffEnergy = 0.7;
@@ -11,7 +11,7 @@ runtimeParameters.nRand = 1e3;
 % If chi squared is less than this value, take the average
 % of 3 measurements to try to counteract the randomness
 % in powder spectrums.
-runtimeParameters.takeAverageCutoff = 0.075;
+runtimeParameters.takeAverageCutoff = 0;
 % The function that creates the SpinW objects
 runtimeParameters.latticeGenerator = @averievite;
 runtimeParameters.cutoffIndex = 1;
@@ -73,10 +73,13 @@ while ~done
     end
 
     newInteractions = get_new_interactions(exchangeInteractions, maxInteractionStrength);
+    newInteractions(2) = -newInteractions(1);
+
     newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
 
     % Try calculating a powder spectrum from the new parameters.
     % If it fails, we just repick new parameters.
+    tic
     try
         newPowSpecData = newPowSpecData.calculatePowderSpectrum();
     catch e
@@ -84,6 +87,8 @@ while ~done
         rmcStats.failCount = rmcStats.failCount + 1;
         continue;
     end
+    t = toc;
+    disp(t)
 
     run_count = run_count + 1;
 
@@ -128,6 +133,11 @@ top10 = get_top_10_results(history);
 newHistory = explore_top_10(top10, experimentalIntensityList, runtimeParameters);
 newTop10 = get_top_10_results(newHistory);
 
-plot_best_matches_2(newTop10, experimentalIntensityList, Q_buckets, runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, maxEnergy);
+plot_best_matches_2(newTop10, experimentalIntensityList, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, 5);
+
+disp("Top 10:")
+for i = 1:10
+    disp("    Exchange Energies: [" + num2str(newTop10(i).getExchangeInteractions) + "]" + ", Chi Squared: " + num2str(newTop10(i).getChiSquared()));
+end
 
 %save("../results/with_j2_NaN-fixed/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-05_centre_0-5_1")
