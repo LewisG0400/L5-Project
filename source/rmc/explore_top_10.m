@@ -1,4 +1,4 @@
-function newHistory = explore_top_10(top10, experimentalIntensityList, runtimeParameters)
+function newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters)
 iterations = 50; %runtimeParameters.totalIterations / 50;
 explorationHistory = top10;
 for i = 1:10
@@ -28,7 +28,7 @@ for i = 1:10
         run_count = run_count + 1;
 
         newPowSpecData = newPowSpecData.calculateIntensityList();
-        newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList);
+        newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList, experimentalError);
 
         explorationHistory(end + 1) = newPowSpecData;
     end

@@ -2,11 +2,11 @@
 % aspects of the RMC.
 runtimeParameters.Q_centre = 1.5;
 runtimeParameters.Q_range = 0.1;
-runtimeParameters.acceptanceParameter = 0.05;
-runtimeParameters.totalIterations = 5000;
-runtimeParameters.n_E_buckets = 50;
+runtimeParameters.acceptanceParameter = 4;
+runtimeParameters.totalIterations = 2500;
+runtimeParameters.n_E_buckets = 25;
 runtimeParameters.nQBuckets = 0;
-runtimeParameters.cutoffEnergy = 0.7;
+runtimeParameters.cutoffEnergy = 5;
 runtimeParameters.nRand = 1e3;
 % If chi squared is less than this value, take the average
 % of 3 measurements to try to counteract the randomness
@@ -31,6 +31,8 @@ rmcStats.worseRejectedCount = 0;
 rmcStats.failCount = 0;
 
 setup_averievite;
+
+runtimeParameters.maxEnergy = max(runtimeParameters.E_buckets);
 
 % Generate the initial exchange parameters
 exchangeInteractions = rand(1, nExchangeParameters);
@@ -60,7 +62,7 @@ while ~valid
 end
 
 originalPowSpecData = originalPowSpecData.calculateIntensityList();
-originalPowSpecData = originalPowSpecData.calculateChiSquared(experimentalIntensityList);
+originalPowSpecData = originalPowSpecData.calculateChiSquared(experimentalIntensityList, experimentalError);
 
 history = [originalPowSpecData];
 
@@ -93,7 +95,7 @@ while ~done
     run_count = run_count + 1;
 
     newPowSpecData = newPowSpecData.calculateIntensityList();
-    newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList);
+    newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList, experimentalError);
 
     chiSquaredDifference = newPowSpecData.getChiSquared() - originalPowSpecData.getChiSquared()
 
@@ -130,10 +132,10 @@ end
 plot_chi_squared_history(chiSquaredHistory);
 
 top10 = get_top_10_results(history);
-newHistory = explore_top_10(top10, experimentalIntensityList, runtimeParameters);
+newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters);
 newTop10 = get_top_10_results(newHistory);
 
-plot_best_matches_2(newTop10, experimentalIntensityList, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, 5);
+plot_best_matches_2(newTop10, experimentalIntensityList, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, 15);
 
 disp("Top 10:")
 for i = 1:10

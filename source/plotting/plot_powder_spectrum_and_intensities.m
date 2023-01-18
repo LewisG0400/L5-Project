@@ -18,7 +18,7 @@ function plot_powder_spectrum_and_intensities(cropped_energy_experimental, cropp
     
     try
         pow_spec = lattice.powspec(lower_Q:0.01:upper_Q, 'Evect', cutoff_energy:0.01:max_energy, 'nRand', 1e3, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-        pow_spec = sw_instrument(pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
+        pow_spec = sw_instrument(pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',15);
     
         sw_plotspec(pow_spec);
 
