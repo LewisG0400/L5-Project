@@ -8,5 +8,6 @@ disp(runtimeParameters.E_buckets)
 runtimeParameters.cutoffIndex = find(runtimeParameters.E_buckets >= runtimeParameters.cutoffEnergy, 1, 'first');
 runtimeParameters.E_buckets = runtimeParameters.E_buckets(runtimeParameters.cutoffIndex:end);
 experimentalIntensityList = experimentalIntensityList(runtimeParameters.cutoffIndex:end);
+experimentalError = experimentalError(runtimeParameters.cutoffIndex:end);
 
-plot(experimentalIntensityList);
+errorbar(experimentalIntensityList, experimentalError);

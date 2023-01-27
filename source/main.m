@@ -2,12 +2,12 @@
 % aspects of the RMC.
 runtimeParameters.Q_centre = 1.5;
 runtimeParameters.Q_range = 0.1;
-runtimeParameters.acceptanceParameter = 4;
-runtimeParameters.totalIterations = 2500;
-runtimeParameters.n_E_buckets = 25;
+runtimeParameters.acceptanceParameter = 10e4;
+runtimeParameters.totalIterations = 5000;
+runtimeParameters.n_E_buckets = 30;
 runtimeParameters.nQBuckets = 0;
 runtimeParameters.cutoffEnergy = 5;
-runtimeParameters.nRand = 1e3;
+runtimeParameters.nRand = 2.5e3;
 % If chi squared is less than this value, take the average
 % of 3 measurements to try to counteract the randomness
 % in powder spectrums.
@@ -18,7 +18,7 @@ runtimeParameters.cutoffIndex = 1;
 
 % This should correspond to the number of exchange interactions
 % input to the lattice generator.
-nExchangeParameters = 4;
+nExchangeParameters = 6;
 
 % The max value the parameters can take - used to generate
 % new parameters.
@@ -55,6 +55,7 @@ while ~valid
 
         exchangeInteractions = rand(1, nExchangeParameters) * (maxInteractionStrength * 2) - maxInteractionStrength;
         exchangeInteractions(2) = -exchangeInteractions(1);
+        exchangeInteractions(6) = -exchangeInteractions(3);
 
         originalPowSpecData = originalPowSpecData.setExchangeInteractions(exchangeInteractions);
         disp(exchangeInteractions);
@@ -76,6 +77,7 @@ while ~done
 
     newInteractions = get_new_interactions(exchangeInteractions, maxInteractionStrength);
     newInteractions(2) = -newInteractions(1);
+    newInteractions(6) = -newInteractions(3);
 
     newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
 
@@ -132,12 +134,18 @@ end
 plot_chi_squared_history(chiSquaredHistory);
 
 top10 = get_top_10_results(history);
+plot_best_matches_2(top10, experimentalIntensityList, experimentalError, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, 15);
+
+disp("Top 10:")
+for i = 1:10
+    disp("    Exchange Energies: [" + num2str(top10(i).getExchangeInteractions) + "]" + ", Chi Squared: " + num2str(top10(i).getChiSquared()));
+end
 newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters);
 newTop10 = get_top_10_results(newHistory);
 
-plot_best_matches_2(newTop10, experimentalIntensityList, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, 15);
+plot_best_matches_2(newTop10, experimentalIntensityList, experimentalError, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, 15);
 
-disp("Top 10:")
+disp("New Top 10:")
 for i = 1:10
     disp("    Exchange Energies: [" + num2str(newTop10(i).getExchangeInteractions) + "]" + ", Chi Squared: " + num2str(newTop10(i).getChiSquared()));
 end

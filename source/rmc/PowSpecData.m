@@ -33,8 +33,8 @@ classdef PowSpecData
             try
                 Q_values = obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range:0.05:obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range;
                 %Q_values = linspace(obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range, obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range, obj.runtimeParameters.nQBuckets);
-                obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.maxEnergy);
+                obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',20);
             catch e
                 rethrow(e);
             end
@@ -48,7 +48,8 @@ classdef PowSpecData
         
         function obj = calculateChiSquared(obj, experimentalIntensityList, experimentalError)
             % Rescale the theory data before we calculate chi squared
-            obj.scaleFactor = max(experimentalIntensityList, [], 'all') / max(obj.getTotalIntensities(), [], 'all');
+            %obj.scaleFactor = max(experimentalIntensityList, [], 'all') / max(obj.getTotalIntensities(), [], 'all');
+            obj.scaleFactor = mean(experimentalIntensityList, 'all') / mean(obj.getTotalIntensities(), 'all');
 
             if obj.scaleFactor == Inf
                 obj.chiSquared = Inf;

@@ -1,4 +1,4 @@
-function newExchangeInteractions = get_new_interactions(oldExchangeInteractions)
+function newExchangeInteractions = get_new_interactions_close(oldExchangeInteractions)
     newExchangeInteractions = oldExchangeInteractions;
     
     %interactionToChange = 1 + floor((size(oldExchangeInteractions, 2)) * rand());
