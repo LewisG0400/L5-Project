@@ -13,14 +13,14 @@ runtimeParameters.nRand = 5e3;
 % in powder spectrums.
 runtimeParameters.takeAverageCutoff = 0;
 % The function that creates the SpinW objects
-runtimeParameters.latticeGenerator = @averievite_2;
-runtimeParameters.constraintFunction = @averievite_constraints;
+runtimeParameters.latticeGenerator = @averievite;
+runtimeParameters.newExchangeFunction = @get_new_averievite_exchanges;
 runtimeParameters.cutoffIndex = 1;
 runtimeParameters.inputEnergy = 20.4;
 
 % This should correspond to the number of exchange interactions
 % input to the lattice generator.
-nExchangeParameters = 4;
+nExchangeParameters = 6;
 
 % The max value the parameters can take - used to generate
 % new parameters.
@@ -55,8 +55,7 @@ while ~valid
         %disp("Error: " + e.message);
         disp(getReport(e, 'extended'));
 
-        exchangeInteractions = rand(1, nExchangeParameters) * (maxInteractionStrength * 2) - maxInteractionStrength;
-        exchangeInteractions = runtimeParameters.constraintFunction(exchangeInteractions);
+        exchangeInteractions = runtimeParameters.newExchangeFunction(exchangeInteractions);
 
         originalPowSpecData = originalPowSpecData.setExchangeInteractions(exchangeInteractions);
         disp(exchangeInteractions);
@@ -78,8 +77,7 @@ while ~done
         break;
     end
 
-    newInteractions = get_new_interactions(exchangeInteractions, maxInteractionStrength);
-    newInteractions = runtimeParameters.constraintFunction(newInteractions);
+    newInteractions = runtimeParameters.newExchangeFunction(exchangeInteractions);
 
     newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
 
