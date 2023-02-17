@@ -5,7 +5,7 @@ function top10 = get_top_10_results(history)
         chiSquaredHistory(i) = history(i).getChiSquared();
     end
 
-    [bestMatchChiSquareds, bestMatchesIndices] = mink(chiSquaredHistory, 10);
+    [bestMatchChiSquareds, bestMatchesIndices] = mink(chiSquaredHistory, 20);
 
     top10 = history(bestMatchesIndices);
 end

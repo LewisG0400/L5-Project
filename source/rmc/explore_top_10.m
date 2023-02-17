@@ -1,5 +1,6 @@
 function newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters)
-iterations = 100; %runtimeParameters.totalIterations / 50;
+%exploreAcceptanceParameter = runtimeParameters.acceptanceParameter / 50;
+iterations = 250; %runtimeParameters.totalIterations / 50;
 explorationHistory = top10;
 for i = 1:10
     originalPowSpecData = top10(i);
@@ -13,8 +14,8 @@ for i = 1:10
             break;
         end
 
-        newInteractions = get_new_interactions_close(exchangeInteractions);
-        newInteractions(2) = -newInteractions(1);
+        newInteractions = get_new_interactions_close(exchangeInteractions, 2.0);
+        newInteractions = runtimeParameters.constraintFunction(newInteractions);
         newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
 
         % Try calculating a powder spectrum from the new parameters.

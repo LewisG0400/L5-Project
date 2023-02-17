@@ -5,10 +5,12 @@ classdef PowSpecData
     properties
         exchangeInteractions
         powderSpectrum
+        powderSpectrumFull
         % This holds the total intensities 
         totalIntensities
         scaleFactor
         chiSquared
+        matrixChiSquared
 
         % The bonds that each interaction works on
         lattice
@@ -22,8 +24,10 @@ classdef PowSpecData
             %POWSPECDATA Construct an instance of this class
             obj.exchangeInteractions = exchangeInteractions;
             obj.powderSpectrum = struct([]);
+            obj.powderSpectrumFull = struct([]);
             obj.totalIntensities = [];
             obj.chiSquared = NaN;
+            obj.matrixChiSquared = NaN;
 
             [obj.lattice, obj.interactionBondList] = runtimeParameters.latticeGenerator(exchangeInteractions);
             obj.runtimeParameters = runtimeParameters;
@@ -34,7 +38,18 @@ classdef PowSpecData
                 Q_values = obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range:0.05:obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range;
                 %Q_values = linspace(obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range, obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range, obj.runtimeParameters.nQBuckets);
                 obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',20);
+                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.inputEnergy);
+            catch e
+                rethrow(e);
+            end
+        end
+
+        function obj = calculatePowderSpectrumInQRange(obj, lowerQ, upperQ, nQs)
+            try
+                Q_values = linspace(lowerQ, upperQ, nQs);
+                %Q_values = linspace(obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range, obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range, obj.runtimeParameters.nQBuckets);
+                obj.powderSpectrumFull = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+                obj.powderSpectrumFull = sw_instrument(obj.powderSpectrumFull, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.inputEnergy);
             catch e
                 rethrow(e);
             end
@@ -48,8 +63,8 @@ classdef PowSpecData
         
         function obj = calculateChiSquared(obj, experimentalIntensityList, experimentalError)
             % Rescale the theory data before we calculate chi squared
-            %obj.scaleFactor = max(experimentalIntensityList, [], 'all') / max(obj.getTotalIntensities(), [], 'all');
-            obj.scaleFactor = mean(experimentalIntensityList, 'all') / mean(obj.getTotalIntensities(), 'all');
+            obj.scaleFactor = max(experimentalIntensityList, [], 'all') / max(obj.getTotalIntensities(), [], 'all');
+            %obj.scaleFactor = mean(experimentalIntensityList, 'all') / mean(obj.getTotalIntensities(), 'all');
 
             if obj.scaleFactor == Inf
                 obj.chiSquared = Inf;
@@ -68,9 +83,9 @@ classdef PowSpecData
         end
 
         function obj = calculateMatrixChiSquared(obj, experimentalIntensityMatrix)
-            obj.scaleFactor = max(experimentalIntensityMatrix, [], 'all') / max(obj.powderSpectrum.swConv, [], 'all');
+            scaleFactor = max(experimentalIntensityMatrix, [], 'all') / max(obj.powderSpectrum.swConv, [], 'all');
 
-            obj.chiSquared = calculate_chi_squared_matrix(obj.powderSpectrum.swConv * obj.scaleFactor, experimentalIntensityMatrix);
+            obj.matrixChiSquared = calculate_chi_squared_matrix(obj.powderSpectrum.swConv * scaleFactor, experimentalIntensityMatrix);
         end
 
         function totalIntensities = getTotalIntensities(obj)
@@ -79,6 +94,10 @@ classdef PowSpecData
 
         function chiSquared = getChiSquared(obj)
             chiSquared = obj.chiSquared;
+        end
+
+        function matrixChiSquared = getMatrixChiSquared(obj)
+            matrixChiSquared = obj.matrixChiSquared;
         end
 
         function exchangeInteractions = getExchangeInteractions(obj)
