@@ -13,14 +13,14 @@ runtimeParameters.nRand = 5e3;
 % in powder spectrums.
 runtimeParameters.takeAverageCutoff = 0;
 % The function that creates the SpinW objects
-runtimeParameters.latticeGenerator = @averievite_2;
+runtimeParameters.latticeGenerator = @averievite;
 runtimeParameters.constraintFunction = @averievite_constraints;
 runtimeParameters.cutoffIndex = 1;
 runtimeParameters.inputEnergy = 20.4;
 
 % This should correspond to the number of exchange interactions
 % input to the lattice generator.
-nExchangeParameters = 4;
+nExchangeParameters = 6;
 
 % The max value the parameters can take - used to generate
 % new parameters.
@@ -38,6 +38,7 @@ runtimeParameters.maxEnergy = max(runtimeParameters.E_buckets);
 
 % Generate the initial exchange parameters
 exchangeInteractions = rand(1, nExchangeParameters);
+originalChiSquared = Inf;
 
 % Calculate the spin wave dispersion of the lattice with the
 % iniital parameters. Throws some error if the Hamiltonian is not
@@ -55,18 +56,14 @@ while ~valid
         %disp("Error: " + e.message);
         disp(getReport(e, 'extended'));
 
-        exchangeInteractions = rand(1, nExchangeParameters) * (maxInteractionStrength * 2) - maxInteractionStrength;
-        exchangeInteractions = runtimeParameters.constraintFunction(exchangeInteractions);
+        exchangeInteractions = runtimeParameters.newExchangeFunction(exchangeInteractions);
 
         originalPowSpecData = originalPowSpecData.setExchangeInteractions(exchangeInteractions);
         disp(exchangeInteractions);
     end
 end
 
-originalPowSpecData = originalPowSpecData.calculateIntensityList();
-originalPowSpecData = originalPowSpecData.calculateChiSquared(experimentalIntensityList, experimentalError);
-
-history = [originalPowSpecData];
+history = [];
 chiSquaredHistoryFull = zeros(1, runtimeParameters.totalIterations);
 
 tic;
@@ -82,11 +79,13 @@ while ~done
     newInteractions = runtimeParameters.constraintFunction(newInteractions);
 
     newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
+    newPowSpecData1 = PowSpecData(newInteractions, runtimeParameters);
 
     % Try calculating a powder spectrum from the new parameters.
     % If it fails, we just repick new parameters.
     try
         newPowSpecData = newPowSpecData.calculatePowderSpectrum();
+        newPowSpecData1 = newPowSpecData1.calculatePowderSpectrumInQRange(0.7, 0.8, 10);
     catch e
         disp("Error: " + e.message);
         rmcStats.failCount = rmcStats.failCount + 1;
@@ -99,7 +98,12 @@ while ~done
     newPowSpecData = newPowSpecData.calculateIntensityList();
     newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList, experimentalError);
 
-    chiSquaredDifference = newPowSpecData.getChiSquared() - originalPowSpecData.getChiSquared()
+    newPowSpecData1 = newPowSpecData1.calculateIntensityList();
+    newPowSpecData1 = newPowSpecData1.calculateChiSquared(experimentalIntensityList1, experimentalError1);
+
+    newChiSquared = newPowSpecData.getChiSquared() + newPowSpecData1.getChiSquared();
+
+    chiSquaredDifference = newChiSquared - originalChiSquared;
 
     if chiSquaredDifference < 0
         exchangeInteractions = newInteractions;
