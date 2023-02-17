@@ -14,7 +14,7 @@ runtimeParameters.nRand = 5e3;
 runtimeParameters.takeAverageCutoff = 0;
 % The function that creates the SpinW objects
 runtimeParameters.latticeGenerator = @averievite;
-runtimeParameters.constraintFunction = @averievite_constraints;
+runtimeParameters.newExchangeFunction = @get_new_averievite_exchanges;
 runtimeParameters.cutoffIndex = 1;
 runtimeParameters.inputEnergy = 20.4;
 
@@ -75,8 +75,7 @@ while ~done
         break;
     end
 
-    newInteractions = get_new_interactions(exchangeInteractions, maxInteractionStrength);
-    newInteractions = runtimeParameters.constraintFunction(newInteractions);
+    newInteractions = runtimeParameters.newExchangeFunction(exchangeInteractions);
 
     newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
     newPowSpecData1 = PowSpecData(newInteractions, runtimeParameters);
