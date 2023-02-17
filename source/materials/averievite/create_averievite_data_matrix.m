@@ -31,6 +31,6 @@ function [data_matrix, Q_buckets, E_buckets] = create_averievite_data_matrix(dat
         E_index = floor(((E - cutoff_energy) / (E_max - cutoff_energy)) * (n_energy_buckets - 1) + 1);
         data_matrix(E_index, Q_index) = min(1.5e-6, S);
     end
-    Q_buckets = Q_buckets(1:Q_index);
+    Q_buckets = Q_buckets(1:Q_index).';
     data_matrix = data_matrix(:, 1:Q_index);
 end
