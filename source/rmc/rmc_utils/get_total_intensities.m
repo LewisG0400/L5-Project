@@ -14,9 +14,10 @@ function total_intensities = get_total_intensities(data, cutoff_index)
     total_intensities = zeros(1, size(data, 1));
 
     for i = 1:size(data, 1)
-        sliced_data = data(i, 1:end);
+        sliced_data = data(i, :);
         total_energy = sum(sliced_data, 'omitnan');
 
         total_intensities(i) = total_energy;
+        i
     end
 end

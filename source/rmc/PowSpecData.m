@@ -5,7 +5,6 @@ classdef PowSpecData
     properties
         exchangeInteractions
         powderSpectrum
-        powderSpectrumFull
         % This holds the total intensities 
         totalIntensities
         scaleFactor
@@ -24,7 +23,6 @@ classdef PowSpecData
             %POWSPECDATA Construct an instance of this class
             obj.exchangeInteractions = exchangeInteractions;
             obj.powderSpectrum = struct([]);
-            obj.powderSpectrumFull = struct([]);
             obj.totalIntensities = [];
             obj.chiSquared = NaN;
             obj.matrixChiSquared = NaN;
@@ -48,8 +46,8 @@ classdef PowSpecData
             try
                 Q_values = linspace(lowerQ, upperQ, nQs);
                 %Q_values = linspace(obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range, obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range, obj.runtimeParameters.nQBuckets);
-                obj.powderSpectrumFull = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-                obj.powderSpectrumFull = sw_instrument(obj.powderSpectrumFull, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.inputEnergy);
+                obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.inputEnergy);
             catch e
                 rethrow(e);
             end

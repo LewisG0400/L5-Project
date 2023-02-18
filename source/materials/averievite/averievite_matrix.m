@@ -1,5 +1,5 @@
 averieviteData = readmatrix("data\Cu5E20T01.txt");
-[averieviteMat, avQ, avE] = create_averievite_data_matrix(averieviteData, 100, 5);
+[averieviteIntensities, avierieviteErrors, avQ, avE] = create_averievite_data(averieviteData);
 
 figure
-surf(avQ, avE, averieviteMat, averieviteMat)
+surf(avQ, avE(200:end), averieviteMat(200:end, :), averieviteMat(200:end, :))
