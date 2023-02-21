@@ -1,12 +1,13 @@
 [haydeeiteLattice, bondList] = haydeeite_full_exchanges([-3.275, 0, 0, 0.948]);
 %[haydeeiteLattice, bondList] = haydeeite([-2.6427, -0.6099, 1.5546]);
 
-haydeeitePowSpec = haydeeiteLattice.powspec(0:0.025:2.5, 'Evect', 0:0.025:2.5, 'nRand', 5e3, 'hermit', true);
+haydeeitePowSpec = haydeeiteLattice.powspec(0:0.025:2.5, 'Evect', 0:0.025:2.5, 'nRand', 5e3, 'formfact', true, 'hermit', true);
 haydeeitePowSpec = sw_instrument(haydeeitePowSpec, 'norm', true, 'dE', 0.1, 'dQ', 0.05, 'Ei', 5);
 
 %plot_total_intensities(experimentalIntensityList, , 2.5, a, [-3.275, 0, 0.948]);
-%figure
-%sw_plotspec(haydeeitePowSpec);
+% figure
+% sw_plotspec(haydeeitePowSpec);
+% subtitle("Taken with exchanges J1 = -3.275, Jd = 0.948")
 
 haydeeitePowSpecData = PowSpecData([-3.275, 0, 0, 0.948], runtimeParameters);
 haydeeitePowSpecData = haydeeitePowSpecData.calculatePowderSpectrum();

@@ -4,7 +4,7 @@ function chi_squared = calculate_chi_squared(calculation_intensities_experimenta
 
     diff = zeros([1 size(calculation_intensities_theory,2)]);
     for i = 1:size(calculation_intensities_theory, 2)
-        if isnan(calculation_intensities_theory(i))
+        if isnan(calculation_intensities_theory(i)) || experimental_errors(i) == 0
             diff(i) = 0;
             continue
         end

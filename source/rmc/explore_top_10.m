@@ -1,9 +1,9 @@
 function newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters)
 %exploreAcceptanceParameter = runtimeParameters.acceptanceParameter / 50;
 iterations = 250; %runtimeParameters.totalIterations / 50;
-explorationHistory = top10;
-for i = 1:10
-    originalPowSpecData = top10(i);
+explorationHistory = [top10];
+for i = 1:size(top10, 2)
+    originalPowSpecData = top10(1, i);
     exchangeInteractions = originalPowSpecData.getExchangeInteractions();
 
     run_count = 0;

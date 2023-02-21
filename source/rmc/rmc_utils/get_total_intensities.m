@@ -1,7 +1,7 @@
 
 % Takes in a matrix of S values and sums the intensities for
 % each value of E
-function total_intensities = get_total_intensities(data, cutoff_index)
+function total_intensities = get_total_intensities(data)
 %     total_intensities = zeros(1, size(data, 1) - cutoff_index);
 % 
 %     for i = cutoff_index:size(data, 1)
@@ -18,6 +18,5 @@ function total_intensities = get_total_intensities(data, cutoff_index)
         total_energy = sum(sliced_data, 'omitnan');
 
         total_intensities(i) = total_energy;
-        i
     end
 end
