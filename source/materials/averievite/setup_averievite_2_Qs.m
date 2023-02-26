@@ -12,8 +12,8 @@ averieviteErrorMatrix = averieviteErrorMatrix(runtimeParameters.cutoffIndex:end,
 
 Q_buckets = averieviteQs(1, lower_Q_1:upper_Q_1);
 
-experimentalIntensityList = get_total_intensities(averieviteDataMatrix(:, lower_Q_1:upper_Q_1), runtimeParameters.cutoffIndex);
-experimentalIntensityList1 = get_total_intensities(averieviteDataMatrix(:, lower_Q_2:upper_Q_2), runtimeParameters.cutoffIndex);
+experimentalIntensityList = get_total_intensities(averieviteDataMatrix(:, lower_Q_1:upper_Q_1));
+experimentalIntensityList1 = get_total_intensities(averieviteDataMatrix(:, lower_Q_2:upper_Q_2));
 
 experimentalError = get_total_errors(averieviteErrorMatrix(:, lower_Q_1:upper_Q_1));
 experimentalError1 = get_total_errors(averieviteErrorMatrix(:, lower_Q_2:upper_Q_2));

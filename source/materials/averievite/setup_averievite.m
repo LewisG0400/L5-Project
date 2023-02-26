@@ -1,20 +1,14 @@
-experimentalData = readmatrix("data/Cu5E20T01_Escan_Q1_5.dat")
+averieviteData = readmatrix("data\Cu5E20T01.txt");
+[averieviteDataMatrix, averieviteErrorMatrix, averieviteQs, averieviteEs] = create_averievite_data(averieviteData);
 
-[experimentalIntensityList, experimentalError, runtimeParameters.E_buckets] = create_averievite_data(experimentalData, runtimeParameters.n_E_buckets);
-experimentalIntensityList = get_total_intensities(experimentalData(:, 3).');
-experimentalError = get_total_errors(experimentalData(:, 4).');
+runtimeParameters.cutoffIndex = find(averieviteEs >= runtimeParameters.cutoffEnergy, 1, 'first');
+runtimeParameters.E_buckets = averieviteEs(runtimeParameters.cutoffIndex:end);
 
-[lower_Q, upper_Q] = 
+averieviteDataMatrix = averieviteDataMatrix(runtimeParameters.cutoffIndex:end, :);
+averieviteErrorMatrix = averieviteErrorMatrix(runtimeParameters.cutoffIndex:end, :);
 
-runtimeParameters.E_buckets = experimentalData(:, 1).';
+[lower_Q_1, upper_Q_1] = get_q_index_range(runtimeParameters.Q_centre, runtimeParameters.Q_range, averieviteQs);
 
-disp(runtimeParameters.E_buckets)
+experimentalIntensityList = get_total_intensities(averieviteDataMatrix(:, lower_Q_1:upper_Q_1));
 
-runtimeParameters.cutoffIndex = find(runtimeParameters.E_buckets >= runtimeParameters.cutoffEnergy, 1, 'first');
-runtimeParameters.E_buckets = runtimeParameters.E_buckets(runtimeParameters.cutoffIndex:end);
-experimentalIntensityList = experimentalIntensityList(runtimeParameters.cutoffIndex:end);
-experimentalError = experimentalError(runtimeParameters.cutoffIndex:end);
-
-runtimeParameters.n_E_buckets = size(experimentalError, 2);
-
-errorbar(experimentalIntensityList, experimentalError);
+experimentalError = get_total_errors(averieviteErrorMatrix(:, lower_Q_1:upper_Q_1));

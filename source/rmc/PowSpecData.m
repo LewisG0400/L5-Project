@@ -10,6 +10,7 @@ classdef PowSpecData
         scaleFactor
         chiSquared
         matrixChiSquared
+        thetaW
 
         % The bonds that each interaction works on
         lattice
@@ -26,6 +27,7 @@ classdef PowSpecData
             obj.totalIntensities = [];
             obj.chiSquared = NaN;
             obj.matrixChiSquared = NaN;
+            obj.thetaW = NaN;
 
             [obj.lattice, obj.interactionBondList] = runtimeParameters.latticeGenerator(exchangeInteractions);
             obj.runtimeParameters = runtimeParameters;
@@ -54,7 +56,7 @@ classdef PowSpecData
         end
 
         function obj = calculateIntensityList(obj)
-            totalIntensityList = get_total_intensities(obj.powderSpectrum.swConv, obj.runtimeParameters.cutoffIndex);
+            totalIntensityList = get_total_intensities(obj.powderSpectrum.swConv);
 
             obj.totalIntensities = totalIntensityList;
         end
@@ -84,6 +86,10 @@ classdef PowSpecData
             scaleFactor = max(experimentalIntensityMatrix, [], 'all') / max(obj.powderSpectrum.swConv, [], 'all');
 
             obj.matrixChiSquared = calculate_chi_squared_matrix(obj.powderSpectrum.swConv * scaleFactor, experimentalIntensityMatrix);
+        end
+
+        function obj = calculateWeissTemperature(obj)
+            thetaW
         end
 
         function totalIntensities = getTotalIntensities(obj)

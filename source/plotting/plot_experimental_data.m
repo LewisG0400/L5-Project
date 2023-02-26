@@ -1,6 +1,7 @@
 function plot_experimental_data(experimental_data_matrix, runtimeParameters, Q_buckets, maxEnergy)
     figure
-    experimental_data_plot = surf(Q_buckets, runtimeParameters.E_buckets, experimental_data_matrix, experimental_data_matrix, 'EdgeColor', 'none');
+    experimental_data_plot = pcolor(Q_buckets, runtimeParameters.E_buckets, experimental_data_matrix);
+    colormap(turbo)
     c = colorbar;
     c.Label.String = 'Intensity (mbarn/meV/cell)';
     c.Label.FontSize = 18;

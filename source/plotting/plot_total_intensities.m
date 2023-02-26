@@ -8,7 +8,7 @@ function plot_total_intensities(cropped_energy_experimental, cropped_energy_theo
     subtitle("Interactions: [" + num2str(interactions) +"], Chi Squared: " + chi_squared)
     xlabel("E (meV)")
     ylabel("Intensity")
-    set(gca, 'xtick', linspace(0, size(cropped_energy_experimental, 2), 10), 'xticklabel', linspace(0, max_energy, 10))
+    set(gca, 'xtick', linspace(0, size(cropped_energy_experimental, 2), 10), 'xticklabel', linspace(0.7, max_energy, 10))
     legend('Experimental Data', 'Theoretical Data')
     drawnow()
 end
