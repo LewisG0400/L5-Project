@@ -10,5 +10,5 @@ function chiSquared = calculate_chi_squared_matrix(experimentalData, theoretical
             diff(i, j) = ((experimentalData(i, j) - theoreticalData(i, j))^2);
         end
     end
-    chiSquared = sum(diff, 'all');
+    chiSquared = sum(diff, 'all', 'omitnan');
 end

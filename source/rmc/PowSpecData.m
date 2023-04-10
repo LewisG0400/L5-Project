@@ -9,6 +9,8 @@ classdef PowSpecData
         totalIntensities
         scaleFactor
         chiSquared
+        matrixChiSquared
+        thetaW
 
         % The bonds that each interaction works on
         lattice
@@ -24,6 +26,8 @@ classdef PowSpecData
             obj.powderSpectrum = struct([]);
             obj.totalIntensities = [];
             obj.chiSquared = NaN;
+            obj.matrixChiSquared = NaN;
+            obj.thetaW = NaN;
 
             [obj.lattice, obj.interactionBondList] = runtimeParameters.latticeGenerator(exchangeInteractions);
             obj.runtimeParameters = runtimeParameters;
@@ -33,37 +37,69 @@ classdef PowSpecData
             try
                 Q_values = obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range:0.05:obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range;
                 %Q_values = linspace(obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range, obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range, obj.runtimeParameters.nQBuckets);
-                obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
-                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
+                obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.inputEnergy);
+            catch e
+                rethrow(e);
+            end
+        end
+
+        function obj = calculatePowderSpectrumInQRange(obj, lowerQ, upperQ, nQs)
+            try
+                Q_values = linspace(lowerQ, upperQ, nQs);
+                %Q_values = linspace(obj.runtimeParameters.Q_centre - obj.runtimeParameters.Q_range, obj.runtimeParameters.Q_centre + obj.runtimeParameters.Q_range, obj.runtimeParameters.nQBuckets);
+                obj.powderSpectrum = obj.lattice.powspec(Q_values, 'Evect', obj.runtimeParameters.E_buckets, 'nRand', obj.runtimeParameters.nRand, 'formfact', true, 'hermit', true, 'imagChk', false, 'fid', 0, 'tid', 0);
+                obj.powderSpectrum = sw_instrument(obj.powderSpectrum, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',obj.runtimeParameters.inputEnergy);
             catch e
                 rethrow(e);
             end
         end
 
         function obj = calculateIntensityList(obj)
-            totalIntensityList = get_total_intensities(obj.powderSpectrum.swConv, obj.runtimeParameters.cutoffIndex);
+            totalIntensityList = get_total_intensities(obj.powderSpectrum.swConv);
 
             obj.totalIntensities = totalIntensityList;
         end
         
-        function obj = calculateChiSquared(obj, experimentalIntensityList)
+        function obj = calculateChiSquared(obj, experimentalIntensityList, experimentalError)
             % Rescale the theory data before we calculate chi squared
             obj.scaleFactor = max(experimentalIntensityList, [], 'all') / max(obj.getTotalIntensities(), [], 'all');
+            %obj.scaleFactor = mean(experimentalIntensityList, 'all') / mean(obj.getTotalIntensities(), 'all');
+
+            if obj.scaleFactor == Inf
+                obj.chiSquared = Inf;
+                return;
+            end
+
             obj.totalIntensities = obj.totalIntensities * obj.scaleFactor;
 
-            chiSquared = calculate_chi_squared(experimentalIntensityList, obj.getTotalIntensities());
+            chiSquared = calculate_chi_squared(experimentalIntensityList, experimentalError, obj.getTotalIntensities());
 
             if chiSquared < obj.runtimeParameters.takeAverageCutoff
-                chiSquared = obj.recalculateChiSquared(chiSquared, experimentalIntensityList, 5);
+                chiSquared = obj.recalculateChiSquared(chiSquared, experimentalIntensityList, experimentalError, 5);
             end
 
             obj.chiSquared = chiSquared;
         end
 
         function obj = calculateMatrixChiSquared(obj, experimentalIntensityMatrix)
-            obj.scaleFactor = max(experimentalIntensityMatrix, [], 'all') / max(obj.powderSpectrum.swConv, [], 'all');
+            scaleFactor = max(experimentalIntensityMatrix, [], 'all') / max(obj.powderSpectrum.swConv, [], 'all');
 
-            obj.chiSquared = calculate_chi_squared_matrix(obj.powderSpectrum.swConv * obj.scaleFactor, experimentalIntensityMatrix);
+            obj.matrixChiSquared = calculate_chi_squared_matrix(obj.powderSpectrum.swConv * scaleFactor, experimentalIntensityMatrix);
+        end
+
+%       Theta_w = -4/3*S(S+1)*sum(z*J_ij)
+%          
+%       where
+%       Theta_w is the Weiss temperature
+%       S is the spin value
+%       z is the number of nearest neighbours
+%       J_ij is the exchange interaction
+        function obj = calculateWeissTemperature(obj, spin)
+            % Multiply by 11.6 to convert from meV to K.
+            % 4 nearest neighbours
+            sum(obj.interactionBondList ~= 0, 2)
+            obj.thetaW = -2/3 * spin * (spin + 1) * sum(obj.exchangeInteractions * 11.6 * sum(obj.interactionBondList ~= 0, 2));
         end
 
         function totalIntensities = getTotalIntensities(obj)
@@ -72,6 +108,14 @@ classdef PowSpecData
 
         function chiSquared = getChiSquared(obj)
             chiSquared = obj.chiSquared;
+        end
+
+        function matrixChiSquared = getMatrixChiSquared(obj)
+            matrixChiSquared = obj.matrixChiSquared;
+        end
+
+        function weissTemperature = getWeissTemperature(obj)
+            weissTemperature = obj.thetaW;
         end
 
         function exchangeInteractions = getExchangeInteractions(obj)
@@ -94,19 +138,19 @@ classdef PowSpecData
     end
 
     methods (Access=private)
-        function chiSquared = recalculateChiSquared(obj, initialChiSquared, experimentalIntensityList, n)
+        function chiSquared = recalculateChiSquared(obj, initialChiSquared, experimentalIntensityList, experimentalError, n)
             totalChiSquared = initialChiSquared;
             for i = 1:n
                 obj1 = obj.calculatePowderSpectrum();
                 obj1 = obj1.calculateIntensityList();
-                loopChiSquared = obj1.calculateChiSquaredNoMean(experimentalIntensityList);
+                loopChiSquared = obj1.calculateChiSquaredNoMean(experimentalIntensityList, experimentalError);
                 totalChiSquared = totalChiSquared + loopChiSquared;
             end
             chiSquared = totalChiSquared / (n + 1);
         end
 
-        function chiSquared = calculateChiSquaredNoMean(obj, experimentalIntensityList)
-            chiSquared = calculate_chi_squared(experimentalIntensityList, obj.scaleFactor * obj.getTotalIntensities());
+        function chiSquared = calculateChiSquaredNoMean(obj, experimentalIntensityList, experimentalError)
+            chiSquared = calculate_chi_squared(experimentalIntensityList, experimentalError, obj.scaleFactor * obj.getTotalIntensities());
         end
     end
 end

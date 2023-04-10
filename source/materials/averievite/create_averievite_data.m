@@ -1,13 +1,9 @@
-function [data, E_buckets] = create_averievite_data(inputData, nEBuckets)
-    E_buckets = linspace(0, 15, nEBuckets);
+% Takes data in the form E, Q, S and converts it into a matrix with each
+% element at i,j equal to S in the ith energy bucket and jth Q bucket.
+function [dataMatrix, errorMatrix, QBuckets, EBuckets] = create_averievite_data(data)
+    EBuckets = unique(data(:, 1)).';
+    QBuckets = unique(data(:, 2)).';
 
-    data = zeros(nEBuckets, 1);
-    
-    for i = 1:size(inputData, 1)
-        E = inputData(i, 1);
-        E_index = floor((E / 15) * (nEBuckets - 1) + 1);
-
-        data(E_index) = data(E_index) + inputData(i, 2);
-    end
+    dataMatrix = reshape(max(0, data(:, 3)), [size(EBuckets, 2) size(QBuckets, 2)]);
+    errorMatrix = reshape(data(:, 4), [size(EBuckets, 2) size(QBuckets, 2)]);
 end
-

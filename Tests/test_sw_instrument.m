@@ -20,33 +20,36 @@ kagome.genmagstr('mode', 'direct', 'nExt', [1 1 1], 'unit', 'lu', 'n', [0 0 1], 
 
 % This is 10 values for nRand, storing nRand, average time taken, average chi
 % squared, chi squared standard deviation
-sw_nRand_param_data = zeros([10, 4]);
+sw_param_data = zeros([25, 3]);
+nRand_values = zeros(25, 1);
+
+Q_values = runtimeParameters.Q_centre - runtimeParameters.Q_range:0.05:runtimeParameters.Q_centre + runtimeParameters.Q_range;
 
 tic
-for i = 1:10
+for i = 1:25
 
     loop_chi_squareds = zeros([5 1]);
     loop_times = zeros([5 1]);
 
-    nRand_value = 50 * i * 1e3;
+    nRand_value = 5 * i * 1e3;
+    nRand_values(i) = nRand_value;
     
     for j = 1:5
 
         tic
-        sw_pow_spec = kagome.powspec(Q_centre - Q_range:0.05:Q_centre + Q_range, 'Evect', E_buckets, 'nRand', nRand_value, 'hermit', true, 'imagChk', false);
+        sw_pow_spec = kagome.powspec(Q_values, 'Evect', runtimeParameters.E_buckets, 'nRand', nRand_value, 'hermit', true, 'imagChk', false);
 
         sw_pow_spec = sw_instrument(sw_pow_spec, 'norm',true, 'dE',0.1, 'dQ',0.05,'Ei',5);
 
         pow_spec_time_taken = toc
-
         loop_times(j) = pow_spec_time_taken;
 
-        sw_intensities = get_total_intensities(sw_pow_spec.swConv, cutoff_index);
+        sw_intensities = get_total_intensities(sw_pow_spec.swConv, runtimeParameters.cutoffIndex)
 
-        scale_factor = max(total_intensity_list_experimental, [], 'all') / max(sw_intensities, [], 'all');
+        scale_factor = max(experimentalIntensityList, [], 'all') / max(sw_intensities, [], 'all');
         sw_intensities = sw_intensities * scale_factor;
 
-        sw_chi_squared = calculate_chi_squared(total_intensity_list_experimental, sw_intensities);
+        sw_chi_squared = calculate_chi_squared(experimentalIntensityList, ones(size(experimentalIntensityList)), sw_intensities)
 
         loop_chi_squareds(j) = sw_chi_squared;
     end
@@ -55,11 +58,22 @@ for i = 1:10
     mean_chi_squared = mean(loop_chi_squareds);
     sd_chi_squared = std(loop_chi_squareds);
 
-    sw_nRand_param_data(i, 1) = nRand_value;
-    sw_nRand_param_data(i, 2) = mean_time_taken;
-    sw_nRand_param_data(i, 3) = mean_chi_squared;
-    sw_nRand_param_data(i, 4) = sd_chi_squared
+    sw_param_data(i, 1) = mean_time_taken;
+    sw_param_data(i, 2) = mean_chi_squared;
+    sw_param_data(i, 3) = sd_chi_squared;
 
     % plot_total_intensities(total_intensity_list_experimental, sw_intensities, 2.5, sw_chi_squared, [-3.275, 0, 0.948]);
 end
 toc
+
+figure
+title("Chi Squared Standard Deviation and Mean Time Taken as functions of nRand")
+xlabel("nRand");
+hold on
+yyaxis left
+plot(nRand_values(:, 1), sw_param_data(:, 1));
+ylabel("Mean time taken (s)");
+yyaxis right
+%plot(nRand_values(:, 1), sw_param_data(:, 2));
+plot(nRand_values(:, 1), sw_param_data(:, 3));
+ylabel("Chi Squared Standard Deviation")
