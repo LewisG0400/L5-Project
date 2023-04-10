@@ -15,5 +15,9 @@ Q_buckets = averieviteQs(1, lower_Q_1:upper_Q_1);
 experimentalIntensityList = get_total_intensities(averieviteDataMatrix(:, lower_Q_1:upper_Q_1));
 experimentalIntensityList1 = get_total_intensities(averieviteDataMatrix(:, lower_Q_2:upper_Q_2));
 
+experimentalScaleFactor = mean(experimentalIntensityList, 'all') / mean(experimentalIntensityList1, 'all');
+experimentalIntensityList1 = experimentalIntensityList1 * experimentalScaleFactor;
+
 experimentalError = get_total_errors(averieviteErrorMatrix(:, lower_Q_1:upper_Q_1));
 experimentalError1 = get_total_errors(averieviteErrorMatrix(:, lower_Q_2:upper_Q_2));
+experimentalError1 = experimentalError1 * experimentalScaleFactor;

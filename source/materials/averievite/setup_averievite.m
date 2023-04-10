@@ -5,7 +5,7 @@ runtimeParameters.cutoffIndex = find(averieviteEs >= runtimeParameters.cutoffEne
 runtimeParameters.E_buckets = averieviteEs(runtimeParameters.cutoffIndex:end);
 
 averieviteDataMatrix = averieviteDataMatrix(runtimeParameters.cutoffIndex:end, :);
-averieviteErrorMatrix = averieviteErrorMatrix(runtimeParameters.cutoffIndex:end, :);
+averieviteErrorMatrix = ones(size(averieviteDataMatrix));%averieviteErrorMatrix(runtimeParameters.cutoffIndex:end, :);
 
 [lower_Q_1, upper_Q_1] = get_q_index_range(runtimeParameters.Q_centre, runtimeParameters.Q_range, averieviteQs);
 

@@ -1,6 +1,6 @@
-function newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters)
+function newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, targetThetaW, runtimeParameters)
 %exploreAcceptanceParameter = runtimeParameters.acceptanceParameter / 50;
-iterations = 50; %runtimeParameters.totalIterations / 50;
+iterations = 250; %runtimeParameters.totalIterations / 50;
 explorationHistory = [top10];
 for i = 1:size(top10, 2)
     originalPowSpecData = top10(1, i);
@@ -13,10 +13,16 @@ for i = 1:size(top10, 2)
         if run_count >= iterations
             break;
         end
+        run_count = run_count + 1;
 
-        newInteractions = get_new_interactions_close(exchangeInteractions, 2.0);
-        newInteractions = runtimeParameters.constraintFunction(newInteractions);
+        newInteractions = get_new_interactions_close(exchangeInteractions, 1.0);
         newPowSpecData = PowSpecData(newInteractions, runtimeParameters);
+
+        newPowSpecData = newPowSpecData.calculateWeissTemperature(1/2);
+
+        if abs(targetThetaW - newPowSpecData.getWeissTemperature()) > 20.0
+            continue;
+        end
 
         % Try calculating a powder spectrum from the new parameters.
         % If it fails, we just repick new parameters.
@@ -26,8 +32,6 @@ for i = 1:size(top10, 2)
             disp("Error: " + e.message);
             continue;
         end
-
-        run_count = run_count + 1;
 
         newPowSpecData = newPowSpecData.calculateIntensityList();
         newPowSpecData = newPowSpecData.calculateChiSquared(experimentalIntensityList, experimentalError);

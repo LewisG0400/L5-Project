@@ -88,8 +88,18 @@ classdef PowSpecData
             obj.matrixChiSquared = calculate_chi_squared_matrix(obj.powderSpectrum.swConv * scaleFactor, experimentalIntensityMatrix);
         end
 
-        function obj = calculateWeissTemperature(obj)
-            thetaW
+%       Theta_w = -4/3*S(S+1)*sum(z*J_ij)
+%          
+%       where
+%       Theta_w is the Weiss temperature
+%       S is the spin value
+%       z is the number of nearest neighbours
+%       J_ij is the exchange interaction
+        function obj = calculateWeissTemperature(obj, spin)
+            % Multiply by 11.6 to convert from meV to K.
+            % 4 nearest neighbours
+            sum(obj.interactionBondList ~= 0, 2)
+            obj.thetaW = -2/3 * spin * (spin + 1) * sum(obj.exchangeInteractions * 11.6 * sum(obj.interactionBondList ~= 0, 2));
         end
 
         function totalIntensities = getTotalIntensities(obj)
@@ -102,6 +112,10 @@ classdef PowSpecData
 
         function matrixChiSquared = getMatrixChiSquared(obj)
             matrixChiSquared = obj.matrixChiSquared;
+        end
+
+        function weissTemperature = getWeissTemperature(obj)
+            weissTemperature = obj.thetaW;
         end
 
         function exchangeInteractions = getExchangeInteractions(obj)

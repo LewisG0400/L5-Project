@@ -8,5 +8,7 @@ function newExchangeInteractions = get_new_interactions_close(oldExchangeInterac
 
     randomOffset = (rand(1, size(newExchangeInteractions, 2)) * range - (range / 2));
     newExchangeInteractions = newExchangeInteractions + randomOffset;
+    newExchangeInteractions(3) = oldExchangeInteractions(3);
+    newExchangeInteractions(4) = oldExchangeInteractions(4);
 end
 
