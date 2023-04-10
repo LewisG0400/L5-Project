@@ -1,11 +1,7 @@
-function top10 = get_top_results(history, n)
-    chiSquaredHistory = zeros(size(history, 2), 1);
-
-    for i = 1:size(history, 2)
-        chiSquaredHistory(i) = history(i).getChiSquared();
-    end
-
+function top10 = get_top_results(chiSquaredHistory, exchangeHistory, experimentalIntensityList, experimentalErrors, runtimeParameters, n)
     [bestMatchChiSquareds, bestMatchesIndices] = mink(chiSquaredHistory, n);
 
-    top10 = history(bestMatchesIndices);
+    size(exchangeHistory(:, bestMatchesIndices))
+
+    top10 = create_powspecdatas_from_exchanges(exchangeHistory(:, bestMatchesIndices), experimentalIntensityList, experimentalErrors, runtimeParameters);
 end

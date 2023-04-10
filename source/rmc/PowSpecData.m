@@ -102,6 +102,16 @@ classdef PowSpecData
             obj.thetaW = -2/3 * spin * (spin + 1) * sum(obj.exchangeInteractions * 11.6 * sum(obj.interactionBondList ~= 0, 2));
         end
 
+        function plot_powder_spectrum(obj)
+            figure
+            sw_plotspec(obj.powderSpectrum);
+            subtitle("Interactions: [" + num2str(obj.exchangeInteractions) +"], Chi Squared: " + obj.chiSquared);
+        end
+
+        function plot_powder_spectrum_and_intensities(obj)
+            
+        end
+
         function totalIntensities = getTotalIntensities(obj)
             totalIntensities = obj.totalIntensities;
         end

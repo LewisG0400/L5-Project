@@ -8,11 +8,11 @@ function [lattice, interactionBondList] = haydeeite(exchangeInteractions)
     % Set up exchange interactions over the lattice.
     lattice.addmatrix('label', 'J1', 'value', exchangeInteractions(1), 'color', 'r')
     lattice.addmatrix('label', 'J2', 'value', exchangeInteractions(2), 'color', 'g')
-    %lattice.addmatrix('label', 'J3', 'value', exchangeInteractions(3), 'color', 'yellow')
+    lattice.addmatrix('label', 'J3', 'value', exchangeInteractions(3), 'color', 'yellow')
     lattice.addmatrix('label', 'Jd', 'value', exchangeInteractions(3), 'color', 'b')
     lattice.addcoupling('mat', 'J1', 'bond', 1)
     lattice.addcoupling('mat', 'J2', 'bond', 2)
-    %lattice.addcoupling('mat', 'J3', 'bond', 3)
+    lattice.addcoupling('mat', 'J3', 'bond', 3)
     lattice.addcoupling('mat', 'Jd', 'bond', 4)
 
     % Generate lattice spins
@@ -23,6 +23,6 @@ function [lattice, interactionBondList] = haydeeite(exchangeInteractions)
 
     %plot(lattice, 'range', [2 2 1]);
 
-    %interactionBondList = [[1]; [2]; [3]; [4]];
-    interactionBondList = [[1]; [2]; [4]];
+    interactionBondList = [[1]; [2]; [3]; [4]];
+    %interactionBondList = [[1]; [2]; [4]];
 end

@@ -37,5 +37,6 @@ colormap("turbo");
     ylabel("Energy transfer (meV)", 'fontsize', 18)
 
 experimentalIntensityList = get_total_intensities(experimentalDataMatrix);
+experimentalError = ones(size(experimentalIntensityList));
 %experimentalIntensityList = experimentalIntensityList * (1.0 /
 %max(experimentalIntensityList)); 

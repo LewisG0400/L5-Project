@@ -1,28 +1,28 @@
 % These are parameters that can be changed to control
 % aspects of the RMC.
 runtimeParameters.Q_centre = 1.0;
-runtimeParameters.Q_range = 0.25;
-runtimeParameters.acceptanceParameter = 1.0 / 0.15e-10;
-runtimeParameters.totalIterations = 20000;
-runtimeParameters.cutoffEnergy = 3;
+runtimeParameters.Q_range = 0.1;
+runtimeParameters.acceptanceParameter = 1.0;
+runtimeParameters.totalIterations = 25;
+runtimeParameters.cutoffEnergy = 0.7;
 runtimeParameters.nRand = 5e3;
 % If chi squared is less than this value, take the average
 % of 3 measurements to try to counteract the randomness
 % in powder spectrums.
 runtimeParameters.takeAverageCutoff = 0;
 % The function that creates the SpinW objects
-runtimeParameters.latticeGenerator = @averievite;
-runtimeParameters.newExchangeFunction = @get_new_averievite_exchanges;
+runtimeParameters.latticeGenerator = @haydeeite;
+runtimeParameters.newExchangeFunction = @get_new_haydeeite_exchanges;
 runtimeParameters.cutoffIndex = 1;
-runtimeParameters.inputEnergy = 20.4;
+runtimeParameters.inputEnergy = 5;
 
 % This should correspond to the number of exchange interactions
 % input to the lattice generator.
-nExchangeParameters = 6;
+nExchangeParameters = 4;
 
 % The max value the parameters can take - used to generate
 % new parameters.
-maxInteractionStrength = 10.0;
+maxInteractionStrength = 5.0;
 
 % This struct has data for monitoring the RMC algorithm.
 rmcStats.worstAccepted = 1;
@@ -31,7 +31,7 @@ rmcStats.worseRejectedCount = 0;
 rmcStats.failCount = 0;
 
 %setup_averievite_2_Qs;
-setup_averievite;
+setup_haydeeite;
 
 runtimeParameters.maxEnergy = max(runtimeParameters.E_buckets);
 
@@ -62,7 +62,8 @@ while ~valid
     end
 end
 
-history = [originalPowSpecData];
+% history = [originalPowSpecData];
+history = zeros([nExchangeParameters, runtimeParameters.totalIterations]);
 chiSquaredHistoryFull = zeros(1, runtimeParameters.totalIterations);
 
 tic;
@@ -108,12 +109,11 @@ while ~done
         originalPowSpecData = newPowSpecData;
         originalChiSquared = newChiSquared;
 
-        history(end + 1) = newPowSpecData;
+        history(:, run_count) = exchangeInteractions;
         chiSquaredHistoryFull(1, run_count) = newChiSquared;
     else
         % We accept a certain number of moves with a probability proportional
         % to the difference in chi squared.
-        chiSquaredDifference * runtimeParameters.acceptanceParameter
         acceptanceProbability = min(1, exp(-chiSquaredDifference * runtimeParameters.acceptanceParameter))
 
         if rand() < acceptanceProbability
@@ -126,7 +126,7 @@ while ~done
             originalPowSpecData = newPowSpecData;
             originalChiSquared = newChiSquared;
 
-            history(end + 1) = newPowSpecData;
+            history(:, run_count) = exchangeInteractions;
             chiSquaredHistoryFull(1, run_count) = newChiSquared;
         else
             rmcStats.worseRejectedCount = rmcStats.worseRejectedCount + 1;
@@ -137,43 +137,3 @@ while ~done
 
 end
 t = toc
-
-top10 = get_top_10_results(history);
-plot_best_matches_2(top10, experimentalIntensityList, experimentalError, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, runtimeParameters.maxEnergy, runtimeParameters.inputEnergy);
-plot_double_best_matches(top10(1, [2, 7, 11, 18, 19, 20]), experimentalIntensityList, experimentalError, experimentalIntensityList1, experimentalError1, averieviteQs, 1.25, 1.25, runtimeParameters.cutoffEnergy, runtimeParameters.cutoffIndex, runtimeParameters.maxEnergy, runtimeParameters.inputEnergy, runtimeParameters.E_buckets);
-
-disp("Top 10:")
-for i = 1:20
-    %top10(i) = top10(i).calculateWeissTemperature(1/2);
-    thetaW = top10(i).getWeissTemperature();
-    disp("    Exchange Energies: [" + num2str(top10(i).getExchangeInteractions) + "]" + ", Chi Squared: " + num2str(top10(i).getChiSquared()) + ", ThetaW: " + num2str(thetaW));
-end
-
-top10Weiss = history(1)
-for i = 1:500
-    history(i) = history(i).calculateWeissTemperature(1/2);
-
-    if abs(-188 - history(i).getWeissTemperature()) <= 20
-        disp(i)
-        top10Weiss(end + 1) = history(i)
-        disp("    Exchange Energies: [" + num2str(history(i).getExchangeInteractions) + "]" + ", Chi Squared: " + num2str(history(i).getChiSquared()) + ", ThetaW: " + num2str(history(i).getWeissTemperature()));
-    end
-end
-top10Weiss = top10Weiss(1, [2, 4, 6, 7])
-newHistory = explore_top_10(top10, experimentalIntensityList, experimentalError, runtimeParameters);
-newTop20 = get_top_10_results(newHistory);
-% 
-plot_best_matches_2(top10WeissUnique, experimentalIntensityList, experimentalError, [0 2.5], runtimeParameters.Q_centre, runtimeParameters.Q_range, runtimeParameters.cutoffEnergy, runtimeParameters.maxEnergy, runtimeParameters.inputEnergy);
-plot_double_best_matches(newTop10(1, [2, 4, 6, 7, 10, 11, 16, 17]), experimentalIntensityList, experimentalError, experimentalIntensityList1, experimentalError1, averieviteQs, 1.25, 1.25, runtimeParameters.cutoffEnergy, runtimeParameters.cutoffIndex, runtimeParameters.maxEnergy, runtimeParameters.inputEnergy, runtimeParameters.E_buckets);
-
-%   
-disp("New Top 10:")
-for i = 1:20
-    if isnan(newTop10(i).getChiSquared())
-        continue;
-    end
-    disp(i)
-    disp("    Exchange Energies: [" + num2str(newTop10(i).getExchangeInteractions) + "]" + ", Chi Squared: " + num2str(newTop10(i).getChiSquared()) + ", ThetaW: " + num2str(newTop10(i).getWeissTemperature()));
-end
-
-%save("../results/with_j2_NaN-fixed/" + total_iterations + "_" + regexprep(num2str(acceptance_parameter), '\.', '-') + "_no-steps_range0-05_centre_0-5_1")
