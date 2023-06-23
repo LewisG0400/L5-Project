@@ -34,7 +34,7 @@ classdef Haydeeite < Material
             end
         end
 
-        function lattice = generateLattice()
+        function lattice = generateLattice(self, exchangeInteractions)
             lattice = spinw;
             lattice.genlattice('lat_const', [6 6 10], 'angled', [90 90 120], 'spgr', 'P -3')
             lattice.addatom('r', [1/2 0 0], 'S', 1/2, 'label', 'MCu1', 'color', 'r')
@@ -59,13 +59,13 @@ classdef Haydeeite < Material
 
         end
 
-        function newExchangeEnergies = getNewExchangeEnergies(oldExchangeEnergies)
-            newExchanges = oldExchanges;
+        function newExchangeEnergies = getNewExchangeEnergies(self, oldExchangeEnergies)
+            newExchangeEnergies = oldExchangeEnergies;
 
-            interactionToChange = 1 + floor((size(oldExchanges, 2)) * rand());
+            interactionToChange = 1 + floor((size(oldExchangeEnergies, 2)) * rand());
             newExchangeInteraction = rand() * (5 * 2) - 5;
 
-            newExchanges(interactionToChange) = newExchangeInteraction;
+            newExchangeEnergies(interactionToChange) = newExchangeInteraction;
         end
 
         

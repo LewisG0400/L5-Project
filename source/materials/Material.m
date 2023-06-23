@@ -1,34 +1,32 @@
 classdef (Abstract) Material
     methods (Abstract, Static)
-        newExchangeEnergies = getNewExchangeEnergies(oldExchangeEnergies)
+        newExchangeEnergies = getNewExchangeEnergies(self, oldExchangeEnergies)
 
-        lattice = generateLattice()
-
-        function exchangeEnergies = createExchangeEnergies(initialGuess)
-
-        end
+        lattice = generateLattice(self)
         
     end
 
-    methods (Static)
-        function exchangeEnergies = createExchangeEnergies(initialGuess, latticeFunction, exchangeFunction)
+    methods
+        function exchangeEnergies = createExchangeEnergies(self, initialGuess)
             valid = false;
-            instance = SingleInstance.getInstance();
-            lattice = latticeFunction();
 
             exchangeEnergies = initialGuess;
 
             while ~valid
-                exchangeEnergies = exchangeFunction(exchangeEnergies);
-                try
-                    quickham(lattice, exchangeEnergies);
+                lattice = self.generateLattice(exchangeEnergies);
+
+                try                    
+                    lattice.powspec(0:0.1:1.0, 'Evect', 0:0.1:1.0, 'nRand', 1, 'hermit', true, 'imagChk', false)
                     valid = true;
 
-                    print("Valid:")
-                    print(exchangeEnergies)
+                    disp("Valid:")
+                    disp(num2str(exchangeEnergies))
                 catch e
-                    print("Invalid:")
-                    print(exchangeEnergies)
+                    disp(e)
+                    disp("Invalid:")
+                    disp(num2str(exchangeEnergies))
+
+                    exchangeEnergies = self.getNewExchangeEnergies(exchangeEnergies);
                 end
             end
         end
